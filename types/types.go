@@ -10,6 +10,9 @@ type DeviceRegisterInput struct {
 	ParentSpec  string    `gorm:"column:parent_spec" json:"parent_spec"`
 	Role        string    `gorm:"column:role" json:"role"`
 	SubRole     string    `gorm:"column:sub_role" json:"sub_role"`
+	Owner       string    `gorm:"column:owner" json:"owner"`
+	CurrentUser string    `gorm:"column:current_user" json:"current_user"`
+	Manager     string    `gorm:"column:manager" json:"manager"`
 	NvmeCount   int       `gorm:"column:nvme_count" json:"nvme_count"`
 	NvmeDesc    string    `gorm:"column:nvme_desc" json:"nvme_desc"`
 	GpuCount    int       `gorm:"column:gpu_count" json:"gpu_count"`
