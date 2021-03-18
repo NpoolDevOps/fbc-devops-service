@@ -95,6 +95,8 @@ func (s *DevopsServer) Run() error {
 }
 
 func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	log.Infof(log.Fields{}, "%v: %v", string(b), err)
 	return nil, "", 0
 }
 
