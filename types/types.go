@@ -14,16 +14,16 @@ type DeviceRegisterInput struct {
 	CurrentUser string    `gorm:"column:current_user" json:"current_user"`
 	Manager     string    `gorm:"column:manager" json:"manager"`
 	NvmeCount   int       `gorm:"column:nvme_count" json:"nvme_count"`
-	NvmeDesc    string    `gorm:"column:nvme_desc" json:"nvme_desc"`
+	NvmeDesc    []string  `gorm:"column:nvme_desc" json:"nvme_desc"`
 	GpuCount    int       `gorm:"column:gpu_count" json:"gpu_count"`
-	GpuDesc     string    `gorm:"column:gpu_desc" json:"gpu_desc"`
+	GpuDesc     []string  `gorm:"column:gpu_desc" json:"gpu_desc"`
 	MemoryCount int       `gorm:"column:memory_count" json:"memory_count"`
 	MemorySize  uint64    `gorm:"column:memory_size" json:"memory_size"`
-	MemoryDesc  string    `gorm:"column:memory_desc" json:"memory_desc"`
+	MemoryDesc  []string  `gorm:"column:memory_desc" json:"memory_desc"`
 	CpuCount    int       `gorm:"column:cpu_count" json:"cpu_count"`
-	CpuDesc     string    `gorm:"column:cpu_desc" json:"cpu_desc"`
+	CpuDesc     []string  `gorm:"column:cpu_desc" json:"cpu_desc"`
 	HddCount    int       `gorm:"column:hdd_count" json:"hdd_count"`
-	HddDesc     string    `gorm:"column:hdd_desc" json:"hdd_desc"`
+	HddDesc     []string  `gorm:"column:hdd_desc" json:"hdd_desc"`
 }
 
 type DeviceCommonOutput struct {
