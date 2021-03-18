@@ -1,10 +1,9 @@
-package fbcmysql
+package devopsmysql
 
 import (
 	"encoding/json"
 	"fmt"
 	log "github.com/EntropyPool/entropy-logger"
-	types "github.com/NpoolDevOps/fbc-devops-service/types"
 	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
@@ -67,13 +66,30 @@ func (cli *MysqlCli) Delete() {
 }
 
 type DeviceConfig struct {
-	Id          uuid.UUID `gorm:"column:id;primary_key"`
 	Maintaining bool      `gorm:"column:maintaining"`
 	Offline     bool      `gorm:"column:offline"`
 	Updating    bool      `gorm:"column:updating"`
 	CreateTime  time.Time `gorm:"column:create_time"`
 	ModifyTime  time.Time `gorm:"column:modify_time"`
-	types.DeviceRegisterInput
+	NvmeDesc    string    `gorm:"column:nvme_desc"`
+	GpuDesc     string    `gorm:"column:gpu_desc"`
+	MemoryDesc  string    `gorm:"column:memory_desc"`
+	CpuDesc     string    `gorm:"column:cpu_desc"`
+	HddDesc     string    `gorm:"column:hdd_desc"`
+	Id          uuid.UUID `gorm:"column:id"`
+	Spec        string    `gorm:"column:spec"`
+	ParentSpec  string    `gorm:"column:parent_spec"`
+	Role        string    `gorm:"column:role"`
+	SubRole     string    `gorm:"column:sub_role"`
+	Owner       string    `gorm:"column:owner"`
+	CurrentUser string    `gorm:"column:current_user"`
+	Manager     string    `gorm:"column:manager"`
+	NvmeCount   int       `gorm:"column:nvme_count"`
+	GpuCount    int       `gorm:"column:gpu_count"`
+	MemoryCount int       `gorm:"column:memory_count"`
+	MemorySize  uint64    `gorm:"column:memory_size"`
+	CpuCount    int       `gorm:"column:cpu_count"`
+	HddCount    int       `gorm:"column:hdd_count"`
 }
 
 func (cli *MysqlCli) QueryDeviceConfig(id uuid.UUID) (*DeviceConfig, error) {
@@ -88,7 +104,7 @@ func (cli *MysqlCli) QueryDeviceConfig(id uuid.UUID) (*DeviceConfig, error) {
 	return &info, nil
 }
 
-func (cli *MysqlCli) InsertElement(info interface{}) error {
+func (cli *MysqlCli) InsertDeviceConfig(info DeviceConfig) error {
 	rc := cli.db.Create(&info)
 	return rc.Error
 }

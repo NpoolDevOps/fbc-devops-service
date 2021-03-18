@@ -9,6 +9,8 @@ import (
 	"github.com/NpoolRD/http-daemon"
 	"io/ioutil"
 	"net/http"
+	"strings"
+	"time"
 )
 
 type DevopsConfig struct {
@@ -96,7 +98,41 @@ func (s *DevopsServer) Run() error {
 
 func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 	b, err := ioutil.ReadAll(req.Body)
-	log.Infof(log.Fields{}, "%v: %v", string(b), err)
+
+	input := types.DeviceRegisterInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	config := devopsmysql.DeviceConfig{}
+	config.Id = input.Id
+	config.Spec = input.Spec
+	config.ParentSpec = input.ParentSpec
+	config.Role = input.Role
+	config.SubRole = input.SubRole
+	config.Owner = input.Owner
+	config.CurrentUser = input.CurrentUser
+	config.Manager = input.Manager
+	config.NvmeCount = input.NvmeCount
+	config.NvmeDesc = strings.Join(input.NvmeDesc, ",")
+	config.GpuCount = input.GpuCount
+	config.GpuDesc = strings.Join(input.GpuDesc, ",")
+	config.MemoryCount = input.MemoryCount
+	config.MemorySize = input.MemorySize
+	config.MemoryDesc = strings.Join(input.MemoryDesc, ",")
+	config.CpuCount = input.CpuCount
+	config.CpuDesc = strings.Join(input.CpuDesc, ",")
+	config.HddCount = input.HddCount
+	config.HddDesc = strings.Join(input.HddDesc, ",")
+	config.CreateTime = time.Now()
+	config.ModifyTime = time.Now()
+
+	err = s.mysqlClient.InsertDeviceConfig(config)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
 	return nil, "", 0
 }
 
