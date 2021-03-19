@@ -9,6 +9,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"golang.org/x/xerrors"
+	"strings"
 	"time"
 )
 
@@ -105,7 +106,31 @@ func (cli *MysqlCli) QueryDeviceConfig(id uuid.UUID) (*DeviceConfig, error) {
 }
 
 func (cli *MysqlCli) InsertDeviceConfig(info DeviceConfig) error {
-	rc := cli.db.Create(&info)
+	couldBeUpdated := false
+
+	oldInfo, err := cli.QueryDeviceConfig(info.Id)
+	if err == nil && oldInfo != nil {
+		if !strings.Contains(oldInfo.ParentSpec, info.ParentSpec) {
+			oldInfo.ParentSpec = fmt.Sprintf("%v,%v", oldInfo.ParentSpec, info.ParentSpec)
+			couldBeUpdated = true
+		}
+	}
+
+	var updateInfo *DeviceConfig = nil
+
+	if couldBeUpdated {
+		updateInfo = oldInfo
+	}
+	if oldInfo.Maintaining {
+		info.ParentSpec = oldInfo.ParentSpec
+		updateInfo = &info
+	}
+
+	if updateInfo == nil {
+		return xerrors.Errorf("invalid operation without maintaining mode")
+	}
+
+	rc := cli.db.Create(updateInfo)
 	return rc.Error
 }
 
