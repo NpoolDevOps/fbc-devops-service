@@ -116,12 +116,12 @@ func (cli *MysqlCli) InsertDeviceConfig(info DeviceConfig) error {
 		}
 	}
 
-	var updateInfo *DeviceConfig = nil
+	var updateInfo *DeviceConfig
 
 	if couldBeUpdated {
 		updateInfo = oldInfo
 	}
-	if oldInfo.Maintaining {
+	if oldInfo != nil && oldInfo.Maintaining {
 		info.ParentSpec = oldInfo.ParentSpec
 		updateInfo = &info
 	}
@@ -130,8 +130,11 @@ func (cli *MysqlCli) InsertDeviceConfig(info DeviceConfig) error {
 		return xerrors.Errorf("invalid operation without maintaining mode")
 	}
 
-	rc := cli.db.Create(updateInfo)
-	return rc.Error
+	if couldBeUpdated {
+		return cli.db.Save(updateInfo).Error
+	}
+
+	return cli.db.Create(updateInfo).Error
 }
 
 func (cli *MysqlCli) QueryDeviceConfigs() []DeviceConfig {
