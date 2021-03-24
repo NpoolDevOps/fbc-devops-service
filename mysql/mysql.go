@@ -121,9 +121,14 @@ func (cli *MysqlCli) InsertDeviceConfig(info DeviceConfig) error {
 	if couldBeUpdated {
 		updateInfo = oldInfo
 	}
-	if oldInfo != nil && oldInfo.Maintaining {
-		info.ParentSpec = oldInfo.ParentSpec
+
+	if oldInfo == nil {
 		updateInfo = &info
+	} else {
+		if oldInfo.Maintaining {
+			info.ParentSpec = oldInfo.ParentSpec
+			updateInfo = &info
+		}
 	}
 
 	if updateInfo == nil {

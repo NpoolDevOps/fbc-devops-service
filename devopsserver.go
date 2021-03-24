@@ -98,11 +98,14 @@ func (s *DevopsServer) Run() error {
 
 func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
 
 	input := types.DeviceRegisterInput{}
 	err = json.Unmarshal(b, &input)
 	if err != nil {
-		return nil, err.Error(), -1
+		return nil, err.Error(), -2
 	}
 
 	config := devopsmysql.DeviceConfig{}
