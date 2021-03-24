@@ -6,6 +6,8 @@ import (
 	devopsmysql "github.com/NpoolDevOps/fbc-devops-service/mysql"
 	devopsredis "github.com/NpoolDevOps/fbc-devops-service/redis"
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
+	licapi "github.com/NpoolDevOps/fbc-license-service/licenseapi"
+	lictypes "github.com/NpoolDevOps/fbc-license-service/types"
 	"github.com/NpoolRD/http-daemon"
 	"io/ioutil"
 	"net/http"
@@ -108,6 +110,13 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 		return nil, err.Error(), -2
 	}
 
+	_, err = licapi.ClientInfo(lictypes.ClientInfoInput{
+		Id: input.Id,
+	})
+	if err != nil {
+		return nil, err.Error(), -3
+	}
+
 	config := devopsmysql.DeviceConfig{}
 	config.Id = input.Id
 	config.Spec = input.Spec
@@ -133,12 +142,12 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 
 	err = s.mysqlClient.InsertDeviceConfig(config)
 	if err != nil {
-		return nil, err.Error(), -2
+		return nil, err.Error(), -4
 	}
 
 	err = s.redisClient.InsertKeyInfo("device", input.Id, input, 2*time.Hour)
 	if err != nil {
-		return nil, err.Error(), -3
+		return nil, err.Error(), -5
 	}
 
 	return nil, "", 0
