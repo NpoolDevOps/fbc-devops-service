@@ -110,8 +110,14 @@ func (cli *MysqlCli) InsertDeviceConfig(info DeviceConfig) error {
 
 	oldInfo, err := cli.QueryDeviceConfig(info.Id)
 	if err == nil && oldInfo != nil {
-		if !strings.Contains(oldInfo.ParentSpec, info.ParentSpec) {
-			oldInfo.ParentSpec = fmt.Sprintf("%v,%v", oldInfo.ParentSpec, info.ParentSpec)
+		s := strings.Split(oldInfo.ParentSpec, ",")
+		if oldInfo.ParentSpec == "" {
+			s = []string{info.ParentSpec}
+			oldInfo.ParentSpec = strings.Join(s, ",")
+			couldBeUpdated = true
+		} else if !strings.Contains(oldInfo.ParentSpec, info.ParentSpec) {
+			s = append(s, info.ParentSpec)
+			oldInfo.ParentSpec = strings.Join(s, ",")
 			couldBeUpdated = true
 		}
 	}
