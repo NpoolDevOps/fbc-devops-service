@@ -145,6 +145,35 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 }
 
 func (s *DevopsServer) DeviceReportRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.DeviceReportInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	device, err := s.redisClient.QueryDevice(input.Id)
+	if err != nil {
+		return nil, err.Error(), -3
+	}
+
+	device.NvmeCount = input.NvmeCount
+	device.GpuCount = input.GpuCount
+	device.MemoryCount = input.MemoryCount
+	device.MemorySize = input.MemorySize
+	device.HddCount = input.HddCount
+	device.LocalAddr = input.LocalAddr
+	device.PublicAddr = input.LocalAddr
+
+	err = s.redisClient.InsertKeyInfo("device", input.Id, input, 2*time.Hour)
+	if err != nil {
+		return nil, err.Error(), -3
+	}
+
 	return nil, "", 0
 }
 
