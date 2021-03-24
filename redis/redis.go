@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/EntropyPool/entropy-logger"
+	types "github.com/NpoolDevOps/fbc-devops-service/types"
 	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
 	"github.com/go-redis/redis"
 	"github.com/google/uuid"
@@ -62,15 +63,6 @@ func NewRedisCli(config RedisConfig) *RedisCli {
 
 var redisKeyPrefix = "fbc:devop:server:"
 
-type DeviceRuntime struct {
-	Id          uuid.UUID
-	NvmeCount   int
-	GpuCount    int
-	MemoryCount int
-	MemorySize  uint64
-	ReportTime  time.Time
-}
-
 func (cli *RedisCli) InsertKeyInfo(keyWord string, id uuid.UUID, info interface{}, ttl time.Duration) error {
 	b, err := json.Marshal(info)
 	if err != nil {
@@ -84,12 +76,12 @@ func (cli *RedisCli) InsertKeyInfo(keyWord string, id uuid.UUID, info interface{
 	return nil
 }
 
-func (cli *RedisCli) QueryDeviceRuntime(cid uuid.UUID) (*DeviceRuntime, error) {
-	val, err := cli.client.Get(fmt.Sprintf("%v:device:runtime:%v", redisKeyPrefix, cid)).Result()
+func (cli *RedisCli) QueryDevice(cid uuid.UUID) (*types.DeviceConfig, error) {
+	val, err := cli.client.Get(fmt.Sprintf("%v:device:%v", redisKeyPrefix, cid)).Result()
 	if err != nil {
 		return nil, err
 	}
-	info := &DeviceRuntime{}
+	info := &types.DeviceConfig{}
 	err = json.Unmarshal([]byte(val), info)
 	if err != nil {
 		return nil, err

@@ -136,6 +136,11 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 		return nil, err.Error(), -2
 	}
 
+	err = s.redisClient.InsertKeyInfo("device", input.Id, input, 2*time.Hour)
+	if err != nil {
+		return nil, err.Error(), -3
+	}
+
 	return nil, "", 0
 }
 

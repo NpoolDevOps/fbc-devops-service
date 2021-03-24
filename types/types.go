@@ -28,6 +28,8 @@ type DeviceRegisterInput struct {
 	PublicAddr  string    `json:"public_addr"`
 }
 
+type DeviceConfig = DeviceRegisterInput
+
 type DeviceCommonOutput struct {
 	Id uuid.UUID `json:"id"`
 }
@@ -42,6 +44,9 @@ type DeviceReportInput struct {
 	GpuCount    int       `json:"gpu_count"`
 	MemoryCount int       `json:"memory_count"`
 	MemorySize  uint64    `json:"memory_size"`
+	HddCount    int       `gorm:"column:hdd_count" json:"hdd_count"`
+	LocalAddr   string    `json:"local_addr"`
+	PublicAddr  string    `json:"public_addr"`
 }
 
 type DeviceReportOutput struct {
