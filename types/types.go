@@ -24,6 +24,8 @@ type DeviceRegisterInput struct {
 	CpuDesc     []string  `json:"cpu_desc"`
 	HddCount    int       `gorm:"column:hdd_count" json:"hdd_count"`
 	HddDesc     []string  `json:"hdd_desc"`
+	LocalAddr   string    `json:"local_addr"`
+	PublicAddr  string    `json:"public_addr"`
 }
 
 type DeviceCommonOutput struct {
