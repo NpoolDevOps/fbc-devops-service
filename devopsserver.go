@@ -260,16 +260,18 @@ func (s *DevopsServer) MyDevicesRequest(w http.ResponseWriter, req *http.Request
 
 		device, err := s.redisClient.QueryDevice(info.Id)
 		if err != nil {
-			return nil, err.Error(), -6
+			if !user.SuperUser {
+				return nil, err.Error(), -6
+			}
+		} else {
+			oInfo.RuntimeNvmeCount = device.NvmeCount
+			oInfo.RuntimeGpuCount = device.GpuCount
+			oInfo.RuntimeMemoryCount = device.MemoryCount
+			oInfo.RuntimeMemorySize = device.MemorySize
+			oInfo.RuntimeHddCount = device.HddCount
+			oInfo.LocalAddr = device.LocalAddr
+			oInfo.PublicAddr = device.PublicAddr
 		}
-
-		oInfo.RuntimeNvmeCount = device.NvmeCount
-		oInfo.RuntimeGpuCount = device.GpuCount
-		oInfo.RuntimeMemoryCount = device.MemoryCount
-		oInfo.RuntimeMemorySize = device.MemorySize
-		oInfo.RuntimeHddCount = device.HddCount
-		oInfo.LocalAddr = device.LocalAddr
-		oInfo.PublicAddr = device.PublicAddr
 
 		output.Devices = append(output.Devices, oInfo)
 	}
