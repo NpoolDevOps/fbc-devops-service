@@ -126,6 +126,8 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 		return nil, err.Error(), -3
 	}
 
+	// TODO: check if valid role
+
 	config := devopsmysql.DeviceConfig{}
 	config.Id = input.Id
 	config.Spec = input.Spec
