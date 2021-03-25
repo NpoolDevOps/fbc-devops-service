@@ -148,8 +148,20 @@ func (cli *MysqlCli) InsertDeviceConfig(info DeviceConfig) error {
 	return cli.db.Create(updateInfo).Error
 }
 
-func (cli *MysqlCli) QueryDeviceConfigs() []DeviceConfig {
+func (cli *MysqlCli) QueryDeviceConfigs() ([]DeviceConfig, error) {
 	var infos []DeviceConfig
-	cli.db.Find(&infos)
-	return infos
+	rc := cli.db.Find(&infos)
+	if rc.Error != nil {
+		return nil, rc.Error
+	}
+	return infos, nil
+}
+
+func (cli *MysqlCli) QueryDeviceConfigsByUser(username string) ([]DeviceConfig, error) {
+	var infos []DeviceConfig
+	rc := cli.db.Where("username = ?", username).Find(&infos)
+	if rc.Error != nil {
+		return nil, rc.Error
+	}
+	return infos, nil
 }

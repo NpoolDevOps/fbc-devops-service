@@ -52,3 +52,21 @@ type DeviceReportInput struct {
 type DeviceReportOutput struct {
 	DeviceCommonOutput
 }
+
+type MyDevicesInput struct {
+	AuthCode string `json:"auth_code"`
+}
+
+type DeviceAttribute struct {
+	DeviceConfig
+	RuntimeNvmeCount   int      `json:"runtime_nvme_count"`
+	RuntimeGpuCount    int      `json:"runtime_gpu_count"`
+	RuntimeMemoryCount int      `json:"runtime_memory_count"`
+	RuntimeMemorySize  uint64   `json:"runtime_memory_size"`
+	RuntimeHddCount    int      `json:"runtime_hdd_count"`
+	ParentSpec         []string `json:"parent_spec"`
+}
+
+type MyDevicesOutput struct {
+	Devices []DeviceAttribute `json"devices"`
+}

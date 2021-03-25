@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	log "github.com/EntropyPool/entropy-logger"
+	authapi "github.com/NpoolDevOps/fbc-auth-service/authapi"
+	authtypes "github.com/NpoolDevOps/fbc-auth-service/types"
 	devopsmysql "github.com/NpoolDevOps/fbc-devops-service/mysql"
 	devopsredis "github.com/NpoolDevOps/fbc-devops-service/redis"
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
@@ -93,6 +95,13 @@ func (s *DevopsServer) Run() error {
 		},
 	})
 
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.MyDevicesAPI,
+		Method:   "POST",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.MyDevicesRequest(w, req)
+		},
+	})
 	log.Infof(log.Fields{}, "start http daemon at %v", s.config.Port)
 	httpdaemon.Run(s.config.Port)
 	return nil
@@ -188,4 +197,82 @@ func (s *DevopsServer) DeviceReportRequest(w http.ResponseWriter, req *http.Requ
 
 func (s *DevopsServer) DeviceMaintainRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 	return nil, "", 0
+}
+
+func (s *DevopsServer) MyDevicesRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.MyDevicesInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	user, err := authapi.UserInfo(authtypes.UserInfoInput{
+		AuthCode: input.AuthCode,
+	})
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	infos := []devopsmysql.DeviceConfig{}
+
+	if user.SuperUser {
+		infos, err = s.mysqlClient.QueryDeviceConfigs()
+	} else {
+		infos, err = s.mysqlClient.QueryDeviceConfigsByUser(user.Username)
+	}
+
+	if err != nil {
+		return nil, err.Error(), -5
+	}
+
+	output := types.MyDevicesOutput{}
+	for _, info := range infos {
+		oInfo := types.DeviceAttribute{}
+
+		oInfo.Id = info.Id
+		oInfo.Spec = info.Spec
+		oInfo.ParentSpec = strings.Split(info.ParentSpec, ",")
+		oInfo.Role = info.Role
+		oInfo.SubRole = info.SubRole
+		oInfo.Owner = info.Owner
+		oInfo.CurrentUser = info.CurrentUser
+		oInfo.Manager = info.Manager
+		oInfo.NvmeCount = info.NvmeCount
+		oInfo.NvmeDesc = strings.Split(info.NvmeDesc, ",")
+		oInfo.GpuCount = info.GpuCount
+		oInfo.GpuDesc = strings.Split(info.GpuDesc, ",")
+		oInfo.MemoryCount = info.MemoryCount
+		oInfo.MemorySize = info.MemorySize
+		oInfo.MemoryDesc = strings.Split(info.MemoryDesc, ",")
+		oInfo.CpuCount = info.CpuCount
+		oInfo.CpuDesc = strings.Split(info.CpuDesc, ",")
+		oInfo.HddCount = info.HddCount
+		oInfo.HddDesc = strings.Split(info.HddDesc, ",")
+
+		device, err := s.redisClient.QueryDevice(info.Id)
+		if err != nil {
+			return nil, err.Error(), -6
+		}
+
+		oInfo.RuntimeNvmeCount = device.NvmeCount
+		oInfo.RuntimeGpuCount = device.GpuCount
+		oInfo.RuntimeMemoryCount = device.MemoryCount
+		oInfo.RuntimeMemorySize = device.MemorySize
+		oInfo.RuntimeHddCount = device.HddCount
+		oInfo.LocalAddr = device.LocalAddr
+		oInfo.PublicAddr = device.PublicAddr
+
+		output.Devices = append(output.Devices, oInfo)
+	}
+
+	return output, "", 0
 }
