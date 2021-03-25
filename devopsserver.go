@@ -126,7 +126,18 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 		return nil, err.Error(), -3
 	}
 
-	// TODO: check if valid role
+	if input.Role == "" {
+		return nil, "role is must", -4
+	}
+
+	valid, err := s.mysqlClient.ValidateRole(input.Role)
+	if err != nil {
+		return nil, err.Error(), -5
+	}
+
+	if !valid {
+		return nil, "role is not valid", -6
+	}
 
 	config := devopsmysql.DeviceConfig{}
 	config.Id = input.Id
@@ -153,12 +164,12 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 
 	err = s.mysqlClient.InsertDeviceConfig(config)
 	if err != nil {
-		return nil, err.Error(), -4
+		return nil, err.Error(), -7
 	}
 
 	err = s.redisClient.InsertKeyInfo("device", input.Id, input, 2*time.Hour)
 	if err != nil {
-		return nil, err.Error(), -5
+		return nil, err.Error(), -8
 	}
 
 	return nil, "", 0

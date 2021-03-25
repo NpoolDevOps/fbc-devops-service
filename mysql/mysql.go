@@ -166,3 +166,21 @@ func (cli *MysqlCli) QueryDeviceConfigsByUser(username string) ([]DeviceConfig, 
 	}
 	return infos, nil
 }
+
+type roleInfo struct {
+	Id       string `gorm:"column:id"`
+	RoleName string `gorm:"column:role_name"`
+}
+
+func (cli *MysqlCli) ValidateRole(role string) (bool, error) {
+	var info roleInfo
+	count := 0
+	rc := cli.db.Where("role_name = ?", role).Find(&info).Count(&count)
+	if rc.Error != nil {
+		return false, rc.Error
+	}
+	if count == 0 {
+		return false, nil
+	}
+	return true, nil
+}
