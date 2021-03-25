@@ -257,6 +257,9 @@ func (s *DevopsServer) MyDevicesRequest(w http.ResponseWriter, req *http.Request
 		oInfo.CpuDesc = strings.Split(info.CpuDesc, ",")
 		oInfo.HddCount = info.HddCount
 		oInfo.HddDesc = strings.Split(info.HddDesc, ",")
+		oInfo.OsSpec = info.OsSpec
+		oInfo.Maintaining = info.Maintaining
+		oInfo.Offline = info.Offline
 
 		device, err := s.redisClient.QueryDevice(info.Id)
 		if err != nil {

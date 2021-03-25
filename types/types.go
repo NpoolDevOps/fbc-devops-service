@@ -24,6 +24,7 @@ type DeviceRegisterInput struct {
 	CpuDesc     []string  `json:"cpu_desc"`
 	HddCount    int       `gorm:"column:hdd_count" json:"hdd_count"`
 	HddDesc     []string  `json:"hdd_desc"`
+	OsSpec      string    `json:"os_spec"`
 	LocalAddr   string    `json:"local_addr"`
 	PublicAddr  string    `json:"public_addr"`
 }
@@ -65,6 +66,8 @@ type DeviceAttribute struct {
 	RuntimeMemorySize  uint64   `json:"runtime_memory_size"`
 	RuntimeHddCount    int      `json:"runtime_hdd_count"`
 	ParentSpec         []string `json:"parent_spec"`
+	Maintaining        bool     `json:"maintaining"`
+	Offline            bool     `json:"offline"`
 }
 
 type MyDevicesOutput struct {

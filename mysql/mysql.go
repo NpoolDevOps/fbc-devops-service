@@ -91,6 +91,7 @@ type DeviceConfig struct {
 	MemorySize  uint64    `gorm:"column:memory_size"`
 	CpuCount    int       `gorm:"column:cpu_count"`
 	HddCount    int       `gorm:"column:hdd_count"`
+	OsSpec      string    `gorm:"column:os_spec"`
 }
 
 func (cli *MysqlCli) QueryDeviceConfig(id uuid.UUID) (*DeviceConfig, error) {
