@@ -71,5 +71,5 @@ type DeviceAttribute struct {
 }
 
 type MyDevicesOutput struct {
-	Devices []DeviceAttribute `json"devices"`
+	Devices []DeviceAttribute `json:"devices"`
 }
