@@ -119,8 +119,8 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 		return nil, err.Error(), -2
 	}
 
-	_, err = licapi.ClientInfo(lictypes.ClientInfoInput{
-		Id: input.Id,
+	clientInfo, err := licapi.ClientInfoBySpec(lictypes.ClientInfoBySpecInput{
+		Spec: input.Spec,
 	})
 	if err != nil {
 		return nil, err.Error(), -3
@@ -140,7 +140,7 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 	}
 
 	config := devopsmysql.DeviceConfig{}
-	config.Id = input.Id
+	config.Id = clientInfo.Id
 	config.Spec = input.Spec
 	config.ParentSpec = input.ParentSpec
 	config.Role = input.Role
@@ -172,7 +172,10 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 		return nil, err.Error(), -8
 	}
 
-	return nil, "", 0
+	output := types.DeviceRegisterOutput{}
+	output.Id = clientInfo.Id
+
+	return output, "", 0
 }
 
 func (s *DevopsServer) DeviceReportRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
