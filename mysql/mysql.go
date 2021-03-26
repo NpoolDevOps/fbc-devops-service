@@ -69,7 +69,6 @@ func (cli *MysqlCli) Delete() {
 type DeviceConfig struct {
 	Maintaining bool      `gorm:"column:maintaining"`
 	Offline     bool      `gorm:"column:offline"`
-	Updating    bool      `gorm:"column:updating"`
 	CreateTime  time.Time `gorm:"column:create_time"`
 	ModifyTime  time.Time `gorm:"column:modify_time"`
 	NvmeDesc    string    `gorm:"column:nvme_desc"`
