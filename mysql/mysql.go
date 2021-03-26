@@ -159,10 +159,17 @@ func (cli *MysqlCli) QueryDeviceConfigs() ([]DeviceConfig, error) {
 
 func (cli *MysqlCli) QueryDeviceConfigsByUser(username string) ([]DeviceConfig, error) {
 	var infos []DeviceConfig
-	rc := cli.db.Where("username = ?", username).Find(&infos)
+
+	count := 0
+
+	rc := cli.db.Where("owner = ? or current_user = ? or manager = ?", username, username, username).Find(&infos).Count(&count)
 	if rc.Error != nil {
 		return nil, rc.Error
 	}
+	if count == 0 {
+		return nil, xerrors.Errorf("find no value")
+	}
+
 	return infos, nil
 }
 
