@@ -162,7 +162,7 @@ func (cli *MysqlCli) QueryDeviceConfigsByUser(username string) ([]DeviceConfig, 
 
 	count := 0
 
-	rc := cli.db.Where("owner = ? or current_user = ? or manager = ?", username, username, username).Find(&infos).Count(&count)
+	rc := cli.db.Where("`owner` = ? or `current_user` = ? or `manager` = ?", username, username, username).Find(&infos).Count(&count)
 	if rc.Error != nil {
 		return nil, rc.Error
 	}
