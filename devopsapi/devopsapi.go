@@ -15,22 +15,25 @@ const devopsDomain = "devops.npool.top"
 func MyDevicesByUsername(input types.MyDevicesByUsernameInput, useDomain bool) (*types.MyDevicesOutput, error) {
 	var host string
 	var err error
+	var scheme string
 
 	if useDomain {
+		scheme = "https"
 		host = devopsDomain
 	} else {
 		host, err = etcdcli.GetHostByDomain(devopsDomain)
 		if err != nil {
 			return nil, err
 		}
+		scheme = "http"
 	}
 
-	log.Infof(log.Fields{}, "req to http://%v%v", host, types.MyDevicesByUsernameAPI)
+	log.Infof(log.Fields{}, "req to %v://%v%v", scheme, host, types.MyDevicesByUsernameAPI)
 
 	resp, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(input).
-		Post(fmt.Sprintf("http://%v%v", host, types.MyDevicesByUsernameAPI))
+		Post(fmt.Sprintf("%v://%v%v", scheme, host, types.MyDevicesByUsernameAPI))
 	if err != nil {
 		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
 		return nil, err
