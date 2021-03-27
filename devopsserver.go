@@ -120,6 +120,22 @@ func (s *DevopsServer) Run() error {
 		},
 	})
 
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.DevopsAlertMgrAddressAPI,
+		Method:   "GET",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.DevopsAlertMgrAddressGetRequest(w, req)
+		},
+	})
+
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.DevopsAlertMgrAddressAPI,
+		Method:   "POST",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.DevopsAlertMgrAddressPostRequest(w, req)
+		},
+	})
+
 	log.Infof(log.Fields{}, "start http daemon at %v", s.config.Port)
 	httpdaemon.Run(s.config.Port)
 	return nil
@@ -359,4 +375,12 @@ func (s *DevopsServer) myDevicesByUserInfo(user *authtypes.UserInfoOutput) (inte
 	}
 
 	return output, "", 0
+}
+
+func (s *DevopsServer) DevopsAlertMgrAddressPostRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	return nil, "NOT IMPLEMENTED NOW", -1
+}
+
+func (s *DevopsServer) DevopsAlertMgrAddressGetRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	return nil, "NOT IMPLEMENTED NOW", -1
 }
