@@ -196,13 +196,13 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 	config.CreateTime = time.Now()
 	config.ModifyTime = time.Now()
 
-	err = s.mysqlClient.InsertDeviceConfig(config)
+	input.Id = clientInfo.Id
+	err = s.redisClient.InsertKeyInfo("device", input.Id, input, 2*time.Hour)
 	if err != nil {
 		return nil, err.Error(), -7
 	}
 
-	input.Id = clientInfo.Id
-	err = s.redisClient.InsertKeyInfo("device", input.Id, input, 2*time.Hour)
+	err = s.mysqlClient.InsertDeviceConfig(config)
 	if err != nil {
 		return nil, err.Error(), -8
 	}
