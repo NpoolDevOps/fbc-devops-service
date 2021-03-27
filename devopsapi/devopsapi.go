@@ -12,10 +12,17 @@ import (
 
 const devopsDomain = "devops.npool.top"
 
-func MyDevicesByUsername(input types.MyDevicesByUsernameInput) (*types.MyDevicesOutput, error) {
-	host, err := etcdcli.GetHostByDomain(devopsDomain)
-	if err != nil {
-		return nil, err
+func MyDevicesByUsername(input types.MyDevicesByUsernameInput, useDomain bool) (*types.MyDevicesOutput, error) {
+	var host string
+	var err error
+
+	if useDomain {
+		host = devopsDomain
+	} else {
+		host, err = etcdcli.GetHostByDomain(devopsDomain)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	log.Infof(log.Fields{}, "req to http://%v%v", host, types.MyDevicesByUsernameAPI)
