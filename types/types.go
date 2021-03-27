@@ -54,8 +54,13 @@ type DeviceReportOutput struct {
 	DeviceCommonOutput
 }
 
-type MyDevicesInput struct {
+type MyDevicesByAuthInput struct {
 	AuthCode string `json:"auth_code"`
+}
+
+type MyDevicesByUsernameInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type DeviceAttribute struct {

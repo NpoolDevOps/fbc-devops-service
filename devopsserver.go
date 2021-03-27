@@ -11,6 +11,7 @@ import (
 	licapi "github.com/NpoolDevOps/fbc-license-service/licenseapi"
 	lictypes "github.com/NpoolDevOps/fbc-license-service/types"
 	"github.com/NpoolRD/http-daemon"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -99,9 +100,26 @@ func (s *DevopsServer) Run() error {
 		Location: types.MyDevicesAPI,
 		Method:   "POST",
 		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
-			return s.MyDevicesRequest(w, req)
+			return s.MyDevicesByAuthRequest(w, req)
 		},
 	})
+
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.MyDevicesByAuthAPI,
+		Method:   "POST",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.MyDevicesByAuthRequest(w, req)
+		},
+	})
+
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.MyDevicesByUsernameAPI,
+		Method:   "POST",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.MyDevicesByUsernameRequest(w, req)
+		},
+	})
+
 	log.Infof(log.Fields{}, "start http daemon at %v", s.config.Port)
 	httpdaemon.Run(s.config.Port)
 	return nil
@@ -216,13 +234,13 @@ func (s *DevopsServer) DeviceMaintainRequest(w http.ResponseWriter, req *http.Re
 	return nil, "", 0
 }
 
-func (s *DevopsServer) MyDevicesRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+func (s *DevopsServer) MyDevicesByAuthRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, err.Error(), -1
 	}
 
-	input := types.MyDevicesInput{}
+	input := types.MyDevicesByAuthInput{}
 	err = json.Unmarshal(b, &input)
 	if err != nil {
 		return nil, err.Error(), -2
@@ -239,7 +257,51 @@ func (s *DevopsServer) MyDevicesRequest(w http.ResponseWriter, req *http.Request
 		return nil, err.Error(), -4
 	}
 
+	return s.myDevicesByUserInfo(user)
+}
+
+func (s *DevopsServer) MyDevicesByUsernameRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.MyDevicesByUsernameInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.Username == "" {
+		return nil, "username is must", -3
+	}
+
+	if input.Password == "" {
+		return nil, "password is must", -4
+	}
+
+	output, err := authapi.Login(authtypes.UserLoginInput{
+		Username: input.Username,
+		Password: input.Password,
+		AppId:    uuid.MustParse("00000002-0002-0002-0002-000000000002"),
+	})
+	if err != nil {
+		return nil, err.Error(), -5
+	}
+
+	user, err := authapi.UserInfo(authtypes.UserInfoInput{
+		AuthCode: output.AuthCode,
+	})
+	if err != nil {
+		return nil, err.Error(), -6
+	}
+
+	return s.myDevicesByUserInfo(user)
+}
+
+func (s *DevopsServer) myDevicesByUserInfo(user *authtypes.UserInfoOutput) (interface{}, string, int) {
 	infos := []devopsmysql.DeviceConfig{}
+	var err error
 
 	if user.SuperUser {
 		infos, err = s.mysqlClient.QueryDeviceConfigs()
@@ -248,7 +310,7 @@ func (s *DevopsServer) MyDevicesRequest(w http.ResponseWriter, req *http.Request
 	}
 
 	if err != nil {
-		return nil, err.Error(), -5
+		return nil, err.Error(), -6
 	}
 
 	output := types.MyDevicesOutput{}
@@ -281,7 +343,7 @@ func (s *DevopsServer) MyDevicesRequest(w http.ResponseWriter, req *http.Request
 		device, err := s.redisClient.QueryDevice(info.Id)
 		if err != nil {
 			if !user.SuperUser {
-				return nil, err.Error(), -6
+				return nil, err.Error(), -7
 			}
 		} else {
 			oInfo.RuntimeNvmeCount = device.NvmeCount
