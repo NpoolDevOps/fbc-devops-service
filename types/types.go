@@ -24,9 +24,9 @@ type DeviceRegisterInput struct {
 	CpuDesc       []string  `json:"cpu_desc"`
 	HddCount      int       `gorm:"column:hdd_count" json:"hdd_count"`
 	HddDesc       []string  `json:"hdd_desc"`
-	EthernetCount int       `gorm:"ethernet_count" json:"ethernet_count"`
-	EthernetDesc  []string  `gorm:"ethernet_desc" json:"ethernet_desc"`
-	OsSpec        string    `gorm:"os_spec" json:"os_spec"`
+	EthernetCount int       `gorm:"column:ethernet_count" json:"ethernet_count"`
+	EthernetDesc  []string  `gorm:"column:ethernet_desc" json:"ethernet_desc"`
+	OsSpec        string    `gorm:"column:os_spec" json:"os_spec"`
 	LocalAddr     string    `json:"local_addr"`
 	PublicAddr    string    `json:"public_addr"`
 	Versions      []string  `json:"versions"`

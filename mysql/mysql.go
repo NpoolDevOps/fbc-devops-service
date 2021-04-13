@@ -67,30 +67,32 @@ func (cli *MysqlCli) Delete() {
 }
 
 type DeviceConfig struct {
-	Maintaining bool      `gorm:"column:maintaining"`
-	Offline     bool      `gorm:"column:offline"`
-	CreateTime  time.Time `gorm:"column:create_time"`
-	ModifyTime  time.Time `gorm:"column:modify_time"`
-	NvmeDesc    string    `gorm:"column:nvme_desc"`
-	GpuDesc     string    `gorm:"column:gpu_desc"`
-	MemoryDesc  string    `gorm:"column:memory_desc"`
-	CpuDesc     string    `gorm:"column:cpu_desc"`
-	HddDesc     string    `gorm:"column:hdd_desc"`
-	Id          uuid.UUID `gorm:"column:id"`
-	Spec        string    `gorm:"column:spec"`
-	ParentSpec  string    `gorm:"column:parent_spec"`
-	Role        string    `gorm:"column:role"`
-	SubRole     string    `gorm:"column:sub_role"`
-	Owner       string    `gorm:"column:owner"`
-	CurrentUser string    `gorm:"column:current_user"`
-	Manager     string    `gorm:"column:manager"`
-	NvmeCount   int       `gorm:"column:nvme_count"`
-	GpuCount    int       `gorm:"column:gpu_count"`
-	MemoryCount int       `gorm:"column:memory_count"`
-	MemorySize  uint64    `gorm:"column:memory_size"`
-	CpuCount    int       `gorm:"column:cpu_count"`
-	HddCount    int       `gorm:"column:hdd_count"`
-	OsSpec      string    `gorm:"column:os_spec"`
+	Maintaining   bool      `gorm:"column:maintaining"`
+	Offline       bool      `gorm:"column:offline"`
+	CreateTime    time.Time `gorm:"column:create_time"`
+	ModifyTime    time.Time `gorm:"column:modify_time"`
+	NvmeDesc      string    `gorm:"column:nvme_desc"`
+	GpuDesc       string    `gorm:"column:gpu_desc"`
+	MemoryDesc    string    `gorm:"column:memory_desc"`
+	CpuDesc       string    `gorm:"column:cpu_desc"`
+	HddDesc       string    `gorm:"column:hdd_desc"`
+	EthernetDesc  string    `gorm:"column:ethernet_desc"`
+	Id            uuid.UUID `gorm:"column:id"`
+	Spec          string    `gorm:"column:spec"`
+	ParentSpec    string    `gorm:"column:parent_spec"`
+	Role          string    `gorm:"column:role"`
+	SubRole       string    `gorm:"column:sub_role"`
+	Owner         string    `gorm:"column:owner"`
+	CurrentUser   string    `gorm:"column:current_user"`
+	Manager       string    `gorm:"column:manager"`
+	NvmeCount     int       `gorm:"column:nvme_count"`
+	GpuCount      int       `gorm:"column:gpu_count"`
+	MemoryCount   int       `gorm:"column:memory_count"`
+	MemorySize    uint64    `gorm:"column:memory_size"`
+	CpuCount      int       `gorm:"column:cpu_count"`
+	HddCount      int       `gorm:"column:hdd_count"`
+	EthernetCount int       `gorm:"column:ethernet_count"`
+	OsSpec        string    `gorm:"column:os_spec"`
 }
 
 func (cli *MysqlCli) QueryDeviceConfig(id uuid.UUID) (*DeviceConfig, error) {

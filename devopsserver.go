@@ -193,6 +193,8 @@ func (s *DevopsServer) DeviceRegisterRequest(w http.ResponseWriter, req *http.Re
 	config.CpuDesc = strings.Join(input.CpuDesc, ",")
 	config.HddCount = input.HddCount
 	config.HddDesc = strings.Join(input.HddDesc, ",")
+	config.EthernetCount = input.EthernetCount
+	config.EthernetDesc = strings.Join(input.EthernetDesc, ",")
 	config.CreateTime = time.Now()
 	config.ModifyTime = time.Now()
 
