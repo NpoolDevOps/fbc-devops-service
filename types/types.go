@@ -81,3 +81,9 @@ type DeviceAttribute struct {
 type MyDevicesOutput struct {
 	Devices []DeviceAttribute `json:"devices"`
 }
+
+type MaintainingInput struct {
+	AuthCode    string    `json:"auth_code"`
+	Maintaining bool      `json:"maintaining"`
+	DeviceID    uuid.UUID `json:"device_id"`
+}

@@ -192,3 +192,17 @@ func (cli *MysqlCli) ValidateRole(role string) (bool, error) {
 	}
 	return true, nil
 }
+
+func (cli *MysqlCli) SetDeviceMaintaining(id uuid.UUID, maintaining bool) error {
+	var info DeviceConfig
+	var count int
+
+	cli.db.Where("id = ?", id).Find(&info).Count(&count)
+	if count == 0 {
+		return xerrors.Errorf("cannot find any value")
+	}
+
+	info.Maintaining = maintaining
+
+	return cli.db.Save(info).Error
+}

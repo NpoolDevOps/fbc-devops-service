@@ -249,6 +249,37 @@ func (s *DevopsServer) DeviceReportRequest(w http.ResponseWriter, req *http.Requ
 }
 
 func (s *DevopsServer) DeviceMaintainRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.MaintainingInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	user, err := authapi.UserInfo(authtypes.UserInfoInput{
+		AuthCode: input.AuthCode,
+	})
+	if err != nil {
+		return nil, err.Error(), -5
+	}
+
+	if !user.SuperUser {
+		return nil, "permission denied", -6
+	}
+
+	err = s.mysqlClient.SetDeviceMaintaining(input.DeviceID, input.Maintaining)
+	if err != nil {
+		return nil, err.Error(), -7
+	}
+
 	return nil, "", 0
 }
 
