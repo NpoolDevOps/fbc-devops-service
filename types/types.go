@@ -87,3 +87,23 @@ type MaintainingInput struct {
 	Maintaining bool      `json:"maintaining"`
 	DeviceID    uuid.UUID `json:"device_id"`
 }
+
+type MetricInput struct {
+	Metrics  []string `json:"metrics"`
+	AuthCode string   `json:"auth_code"`
+}
+
+type Outresp struct {
+	MetricName string     `json:"metric_name"`
+	Metric     []MyMetric `json:"metric"`
+}
+
+type MyMetric struct {
+	Instance string `json:"instance"`
+	Job      string `json:"job"`
+	Value    string `json:"value"`
+}
+
+type MetricOutput struct {
+	MetricsValue []Outresp `json:"metrics_value"`
+}

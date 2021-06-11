@@ -2,20 +2,22 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
+
 	log "github.com/EntropyPool/entropy-logger"
 	authapi "github.com/NpoolDevOps/fbc-auth-service/authapi"
 	authtypes "github.com/NpoolDevOps/fbc-auth-service/types"
+	"github.com/NpoolDevOps/fbc-devops-service/gateway"
 	devopsmysql "github.com/NpoolDevOps/fbc-devops-service/mysql"
 	devopsredis "github.com/NpoolDevOps/fbc-devops-service/redis"
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
 	licapi "github.com/NpoolDevOps/fbc-license-service/licenseapi"
 	lictypes "github.com/NpoolDevOps/fbc-license-service/types"
-	"github.com/NpoolRD/http-daemon"
+	httpdaemon "github.com/NpoolRD/http-daemon"
 	"github.com/google/uuid"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"time"
 )
 
 type DevopsConfig struct {
@@ -133,6 +135,14 @@ func (s *DevopsServer) Run() error {
 		Method:   "POST",
 		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 			return s.DevopsAlertMgrAddressPostRequest(w, req)
+		},
+	})
+
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.MyDevicesMetricsAPI,
+		Method:   "Post",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.DevicesMetricsRequest(w, req)
 		},
 	})
 
@@ -416,4 +426,36 @@ func (s *DevopsServer) DevopsAlertMgrAddressPostRequest(w http.ResponseWriter, r
 
 func (s *DevopsServer) DevopsAlertMgrAddressGetRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 	return nil, "NOT IMPLEMENTED NOW", -1
+}
+
+func (s *DevopsServer) DevicesMetricsRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+	input := types.MetricInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	_, err = authapi.UserInfo(authtypes.UserInfoInput{
+		AuthCode: input.AuthCode,
+	})
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	output, err := gateway.GetMetrics(input.Metrics)
+	if err != nil {
+		return nil, err.Error(), -5
+	}
+
+	return types.MetricOutput{
+		MetricsValue: output,
+	}, "", 0
 }

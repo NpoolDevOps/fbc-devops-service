@@ -9,4 +9,5 @@ const (
 	MyDevicesByUsernameAPI   = "/api/v0/device/minebyuser"
 	DevopsAlertMgrAddressAPI = "/api/v0/device/alertmgraddr"
 	DevopsAuthText           = "FBC DevOps Server - @Copyright NPool COP."
+	MyDevicesMetricsAPI      = "/api/v0/device/metrics"
 )
