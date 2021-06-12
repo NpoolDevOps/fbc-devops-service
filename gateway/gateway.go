@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	log "github.com/EntropyPool/entropy-logger"
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
@@ -29,17 +30,6 @@ type Metric struct {
 	Job      string `json:"job"`
 }
 
-// type Outresp struct {
-// 	metricName string
-// 	metric     []MyMetric
-// }
-
-// type MyMetric struct {
-// 	instance string
-// 	job      string
-// 	value    string
-// }
-
 func GetMetrics(metrics []string) ([]types.Outresp, error) {
 	var output []types.Outresp
 	for _, metric := range metrics {
@@ -62,7 +52,7 @@ func GetMetrics(metrics []string) ([]types.Outresp, error) {
 		dataresult := result.Data.Result
 		for _, v := range dataresult {
 			mymetric := types.MyMetric{}
-			mymetric.Instance = v.Metric.Instance
+			mymetric.Instance = strings.TrimSpace(strings.Split(v.Metric.Instance, ":")[0])
 			mymetric.Job = v.Metric.Job
 			mymetric.Value = v.Value[1].(string)
 

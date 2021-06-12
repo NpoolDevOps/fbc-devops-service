@@ -140,7 +140,7 @@ func (s *DevopsServer) Run() error {
 
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
 		Location: types.MyDevicesMetricsAPI,
-		Method:   "Post",
+		Method:   "POST",
 		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 			return s.DevicesMetricsRequest(w, req)
 		},
