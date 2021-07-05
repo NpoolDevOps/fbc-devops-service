@@ -3,12 +3,13 @@ package fbcredis
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	log "github.com/EntropyPool/entropy-logger"
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
 	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
 	"github.com/go-redis/redis"
 	"github.com/google/uuid"
-	"time"
 )
 
 type RedisConfig struct {
@@ -69,7 +70,7 @@ func (cli *RedisCli) InsertKeyInfo(keyWord string, id uuid.UUID, info interface{
 		return err
 	}
 	err = cli.client.Set(fmt.Sprintf("%v:%v:%v", redisKeyPrefix, keyWord, id),
-		string(b), ttl*time.Second).Err()
+		string(b), ttl).Err()
 	if err != nil {
 		return err
 	}
