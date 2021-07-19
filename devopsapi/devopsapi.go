@@ -3,10 +3,11 @@ package devopsapi
 import (
 	"encoding/json"
 	"fmt"
+
 	log "github.com/EntropyPool/entropy-logger"
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
 	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
-	"github.com/NpoolRD/http-daemon"
+	httpdaemon "github.com/NpoolRD/http-daemon"
 	"golang.org/x/xerrors"
 )
 

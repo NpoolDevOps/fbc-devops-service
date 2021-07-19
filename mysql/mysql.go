@@ -3,14 +3,15 @@ package devopsmysql
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
+
 	log "github.com/EntropyPool/entropy-logger"
 	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"golang.org/x/xerrors"
-	"strings"
-	"time"
 )
 
 type MysqlConfig struct {

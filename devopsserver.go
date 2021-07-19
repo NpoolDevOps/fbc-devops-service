@@ -248,9 +248,9 @@ func (s *DevopsServer) DeviceReportRequest(w http.ResponseWriter, req *http.Requ
 	device.MemorySize = input.MemorySize
 	device.HddCount = input.HddCount
 	device.LocalAddr = input.LocalAddr
-	device.PublicAddr = input.LocalAddr
+	device.PublicAddr = input.PublicAddr
 
-	err = s.redisClient.InsertKeyInfo("device", input.Id, input, 2*time.Hour)
+	err = s.redisClient.InsertKeyInfo("device", input.Id, device, 2*time.Hour)
 	if err != nil {
 		return nil, err.Error(), -3
 	}
