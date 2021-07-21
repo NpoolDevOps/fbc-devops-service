@@ -11,18 +11,32 @@ import (
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
 )
 
-type Response struct {
-	Status string `json:"status"`
-	Data   Data   `json:"data"`
+type MetricResponse struct {
+	Status string     `json:"status"`
+	Data   MetricData `json:"data"`
 }
 
-type Data struct {
-	Result []Result `json:"result"`
+type MetricData struct {
+	Result []MetricResult `json:"result"`
 }
 
-type Result struct {
+type MetricResult struct {
 	Metric Metric        `json:"metric"`
 	Value  []interface{} `json:"value"`
+}
+
+type MetricDataResult struct {
+	Metric Metric          `json:"metric"`
+	Value  [][]interface{} `json:"value"`
+}
+
+type MetricDataResponse struct {
+	Status string         `json:"status"`
+	Data   MetricDataData `json:"data"`
+}
+
+type MetricDataData struct {
+	Result []MetricDataResult `json:"result"`
 }
 
 type Metric struct {
@@ -33,7 +47,7 @@ type Metric struct {
 func GetMetrics(metrics []string) ([]types.Outresp, error) {
 	var output []types.Outresp
 	for _, metric := range metrics {
-		result := Response{}
+		result := MetricResponse{}
 		resp, err := http.Get(fmt.Sprintf("http://47.99.107.242:9090/api/v1/query?query=%v", metric))
 		if err != nil {
 			log.Errorf(log.Fields{}, "get info from prometheus err: %v", err)
@@ -61,6 +75,43 @@ func GetMetrics(metrics []string) ([]types.Outresp, error) {
 		}
 
 		output = append(output, outputResp)
+	}
+	return output, nil
+}
+
+func GetMetricsData(metrics []string, startTime, endTime, step string) ([]types.MetricData, error) {
+	var output []types.MetricData
+
+	for _, metric := range metrics {
+		result := MetricDataResponse{}
+		resp, err := http.Get(fmt.Sprintf("http://47.99.107.242:9090/api/v1/query_range?query=%v&start=%v&end=%v&step=%v", metric, startTime, endTime, step))
+		if err != nil {
+			log.Errorf(log.Fields{}, "get info from prometheus err: %v", err)
+			return nil, err
+		}
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(body, &result)
+		if err != nil {
+			return nil, err
+		}
+
+		metricData := types.MetricData{}
+		for _, v := range result.Data.Result {
+			instanceData := types.InstanceData{}
+			instanceData.Instance = strings.TrimSpace(strings.Split(v.Metric.Instance, ":")[0])
+			instanceData.Job = v.Metric.Job
+			for _, vv := range v.Value {
+				instanceData.Date = append(instanceData.Date, vv[0])
+				instanceData.Value = append(instanceData.Value, vv[1])
+			}
+			metricData.InstanceDatas = append(metricData.InstanceDatas, instanceData)
+		}
+		metricData.MetricName = metric
+
+		output = append(output, metricData)
 	}
 	return output, nil
 }

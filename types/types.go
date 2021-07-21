@@ -107,3 +107,27 @@ type MyMetric struct {
 type MetricOutput struct {
 	MetricsValue []Outresp `json:"metrics_value"`
 }
+
+type DeviceMetricsDataInput struct {
+	AuthCode  string   `json:"auth_code"`
+	Metrics   []string `json:"metrics"`
+	StartTime string   `json:"start_time"`
+	EndTime   string   `json:"end_time"`
+	Step      string   `json:"step"`
+}
+
+type InstanceData struct {
+	Instance string        `json:"instance"`
+	Job      string        `json:"job"`
+	Date     []interface{} `json:"data"`
+	Value    []interface{} `json:"value"`
+}
+
+type MetricData struct {
+	MetricName    string         `json:"metric_name"`
+	InstanceDatas []InstanceData `json:"instance_datas"`
+}
+
+type DeviceMetricsDataOutput struct {
+	MetricDatas []MetricData `json:"Metric_datas"`
+}

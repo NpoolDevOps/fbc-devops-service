@@ -146,6 +146,14 @@ func (s *DevopsServer) Run() error {
 		},
 	})
 
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.DeviceMetricsDataAPI,
+		Method:   "POST",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.DeviceMetricsDataRequest(w, req)
+		},
+	})
+
 	log.Infof(log.Fields{}, "start http daemon at %v", s.config.Port)
 	httpdaemon.Run(s.config.Port)
 	return nil
@@ -457,5 +465,37 @@ func (s *DevopsServer) DevicesMetricsRequest(w http.ResponseWriter, req *http.Re
 
 	return types.MetricOutput{
 		MetricsValue: output,
+	}, "", 0
+}
+
+func (s *DevopsServer) DeviceMetricsDataRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+	input := types.DeviceMetricsDataInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	_, err = authapi.UserInfo(authtypes.UserInfoInput{
+		AuthCode: input.AuthCode,
+	})
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	output, err := gateway.GetMetricsData(input.Metrics, input.StartTime, input.EndTime, input.Step)
+	if err != nil {
+		return nil, err.Error(), -5
+	}
+
+	return types.DeviceMetricsDataOutput{
+		MetricDatas: output,
 	}, "", 0
 }
