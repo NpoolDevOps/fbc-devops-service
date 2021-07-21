@@ -24,12 +24,6 @@ type MetricResult struct {
 	Metric Metric        `json:"metric"`
 	Value  []interface{} `json:"value"`
 }
-
-type MetricDataResult struct {
-	Metric Metric          `json:"metric"`
-	Value  [][]interface{} `json:"value"`
-}
-
 type MetricDataResponse struct {
 	Status string         `json:"status"`
 	Data   MetricDataData `json:"data"`
@@ -37,6 +31,11 @@ type MetricDataResponse struct {
 
 type MetricDataData struct {
 	Result []MetricDataResult `json:"result"`
+}
+
+type MetricDataResult struct {
+	Metric Metric          `json:"metric"`
+	Values [][]interface{} `json:"values"`
 }
 
 type Metric struct {
@@ -103,8 +102,8 @@ func GetMetricsData(metrics []string, startTime, endTime, step string) ([]types.
 			instanceData := types.InstanceData{}
 			instanceData.Instance = strings.TrimSpace(strings.Split(v.Metric.Instance, ":")[0])
 			instanceData.Job = v.Metric.Job
-			for _, vv := range v.Value {
-				instanceData.Date = append(instanceData.Date, vv[0])
+			for _, vv := range v.Values {
+				instanceData.Date = append(instanceData.Date, fmt.Sprintf("%.0f", vv[0]))
 				instanceData.Value = append(instanceData.Value, vv[1])
 			}
 			metricData.InstanceDatas = append(metricData.InstanceDatas, instanceData)
