@@ -119,7 +119,6 @@ type DeviceMetricsDataInput struct {
 type InstanceData struct {
 	Instance string        `json:"instance"`
 	Job      string        `json:"job"`
-	Date     []interface{} `json:"data"`
 	Value    []interface{} `json:"value"`
 }
 
@@ -129,5 +128,6 @@ type MetricData struct {
 }
 
 type DeviceMetricsDataOutput struct {
-	MetricDatas []MetricData `json:"Metric_datas"`
+	MetricDatas []MetricData  `json:"metric_datas"`
+	Date        []interface{} `json:"date"`
 }

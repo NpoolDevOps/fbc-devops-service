@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	log "github.com/EntropyPool/entropy-logger"
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
@@ -78,39 +79,46 @@ func GetMetrics(metrics []string) ([]types.Outresp, error) {
 	return output, nil
 }
 
-func GetMetricsData(metrics []string, startTime, endTime, step string) ([]types.MetricData, error) {
+func GetMetricsData(metrics []string, startTime, endTime, step string) (types.DeviceMetricsDataOutput, error) {
 	var output []types.MetricData
+	var dateArr []interface{}
+	timeTemplate := "2006-01-02-15:04:05"
 
 	for _, metric := range metrics {
 		result := MetricDataResponse{}
 		resp, err := http.Get(fmt.Sprintf("http://47.99.107.242:9090/api/v1/query_range?query=%v&start=%v&end=%v&step=%v", metric, startTime, endTime, step))
 		if err != nil {
 			log.Errorf(log.Fields{}, "get info from prometheus err: %v", err)
-			return nil, err
+			return types.DeviceMetricsDataOutput{}, err
 		}
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return nil, err
+			return types.DeviceMetricsDataOutput{}, err
 		}
 		err = json.Unmarshal(body, &result)
 		if err != nil {
-			return nil, err
+			return types.DeviceMetricsDataOutput{}, err
 		}
 
 		metricData := types.MetricData{}
 		for _, v := range result.Data.Result {
+			var date []interface{}
 			instanceData := types.InstanceData{}
 			instanceData.Instance = strings.TrimSpace(strings.Split(v.Metric.Instance, ":")[0])
 			instanceData.Job = v.Metric.Job
 			for _, vv := range v.Values {
-				instanceData.Date = append(instanceData.Date, fmt.Sprintf("%.0f", vv[0]))
+				date = append(date, time.Unix(int64(vv[0].(float64)), 0).Format(timeTemplate))
 				instanceData.Value = append(instanceData.Value, vv[1])
 			}
+			dateArr = date
 			metricData.InstanceDatas = append(metricData.InstanceDatas, instanceData)
 		}
 		metricData.MetricName = metric
 
 		output = append(output, metricData)
 	}
-	return output, nil
+	return types.DeviceMetricsDataOutput{
+		MetricDatas: output,
+		Date:        dateArr,
+	}, nil
 }

@@ -495,7 +495,5 @@ func (s *DevopsServer) DeviceMetricsDataRequest(w http.ResponseWriter, req *http
 		return nil, err.Error(), -5
 	}
 
-	return types.DeviceMetricsDataOutput{
-		MetricDatas: output,
-	}, "", 0
+	return output, "", 0
 }
