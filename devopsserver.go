@@ -162,6 +162,14 @@ func (s *DevopsServer) Run() error {
 		},
 	})
 
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.DeviceMetricsByAddressAPI,
+		Method:   "POST",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.DeviceMetricsByAddressRequest(w, req)
+		},
+	})
+
 	log.Infof(log.Fields{}, "start http daemon at %v", s.config.Port)
 	httpdaemon.Run(s.config.Port)
 	return nil
@@ -546,4 +554,27 @@ func (s *DevopsServer) MinerDeviceListRequest(w http.ResponseWriter, req *http.R
 		Devices: output,
 	}, "", 0
 
+}
+
+func (s *DevopsServer) DeviceMetricsByAddressRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+	input := types.MetricsByAddr{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	output, err := gateway.GetMetricsByLocalAddr(input.Address)
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	return output, "", 0
 }

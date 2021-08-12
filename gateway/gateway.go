@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -22,8 +23,8 @@ type MetricData struct {
 }
 
 type MetricResult struct {
-	Metric Metric        `json:"metric"`
-	Value  []interface{} `json:"value"`
+	Metric map[string]string `json:"metric"`
+	Value  []interface{}     `json:"value"`
 }
 type MetricDataResponse struct {
 	Status string         `json:"status"`
@@ -66,8 +67,8 @@ func GetMetrics(metrics []string) ([]types.Outresp, error) {
 		dataresult := result.Data.Result
 		for _, v := range dataresult {
 			mymetric := types.MyMetric{}
-			mymetric.Instance = strings.TrimSpace(strings.Split(v.Metric.Instance, ":")[0])
-			mymetric.Job = v.Metric.Job
+			// mymetric.Instance = strings.TrimSpace(strings.Split(v.Metric.Instance, ":")[0])
+			// mymetric.Job = v.Metric.Job
 			mymetric.Value = v.Value[1].(string)
 
 			outputResp.Metric = append(outputResp.Metric, mymetric)
@@ -121,4 +122,51 @@ func GetMetricsData(metrics []string, startTime, endTime, step string) (types.De
 		MetricDatas: output,
 		Date:        dateArr,
 	}, nil
+}
+
+func GetMetricsByLocalAddr(localAddr string) (Metrics, error) {
+	var output Metrics
+	result := MetricResponse{}
+	query := "instance={\"" + localAddr + ":52379\"}"
+	query = strings.Replace(url.QueryEscape(query), "+", "%20", -1)
+	resp, err := http.Get(fmt.Sprintf("http://106.14.125.55:9988/api/v1/query?query=%v", query))
+	if err != nil {
+		log.Errorf(log.Fields{}, "get info from prometheus error: %v", err)
+		return Metrics{}, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf(log.Fields{}, "read resp body error: %v", err)
+		return Metrics{}, err
+	}
+
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		log.Errorf(log.Fields{}, "fail to unmarshal: %v", err)
+		return Metrics{}, err
+	}
+
+	for _, v := range result.Data.Result {
+		out := MyMetric{}
+		if strings.HasPrefix(v.Metric["__name__"], "go_") || strings.HasPrefix(v.Metric["__name__"], "process_") || strings.HasPrefix(v.Metric["__name__"], "promhttp_") || v.Metric["__name__"] == "up" {
+			continue
+		}
+		out.Value = v.Value[1].(string)
+		out.MetricName = v.Metric["__name__"]
+		for k, vv := range v.Metric {
+			out.Metric[k] = vv
+		}
+		output.Metric = append(output.Metric, out)
+	}
+	return output, nil
+}
+
+type MyMetric struct {
+	MetricName string
+	Metric     map[string]string
+	Value      string
+}
+
+type Metrics struct {
+	Metric []MyMetric
 }

@@ -137,3 +137,8 @@ type MinerDeviceListInput struct {
 }
 
 type MinerDeviceListOutput = MyDevicesOutput
+
+type MetricsByAddr struct {
+	AuthCode string `json:"auth_code"`
+	Address  string `json:"address"`
+}
