@@ -11,4 +11,5 @@ const (
 	DevopsAuthText           = "FBC DevOps Server - @Copyright NPool COP."
 	MyDevicesMetricsAPI      = "/api/v0/device/metrics"
 	DeviceMetricsDataAPI     = "/api/v0/device/metricsdata"
+	MinerDeviceListAPI       = "/api/v0/miner/device/list"
 )

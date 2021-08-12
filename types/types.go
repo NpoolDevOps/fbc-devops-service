@@ -131,3 +131,9 @@ type DeviceMetricsDataOutput struct {
 	MetricDatas []MetricData  `json:"metric_datas"`
 	Date        []interface{} `json:"date"`
 }
+
+type MinerDeviceListInput struct {
+	AuthCode string `json:"auth_code"`
+}
+
+type MinerDeviceListOutput = MyDevicesOutput
