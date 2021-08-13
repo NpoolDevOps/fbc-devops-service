@@ -127,7 +127,7 @@ func GetMetricsData(metrics []string, startTime, endTime, step string) (types.De
 func GetMetricsByLocalAddr(localAddr string) (Metrics, error) {
 	var output Metrics
 	result := MetricResponse{}
-	query := "instance={\"" + localAddr + ":52379\"}"
+	query := "{instance=\"" + localAddr + ":52379\"}"
 	query = strings.Replace(url.QueryEscape(query), "+", "%20", -1)
 	resp, err := http.Get(fmt.Sprintf("http://106.14.125.55:9988/api/v1/query?query=%v", query))
 	if err != nil {
@@ -153,20 +153,22 @@ func GetMetricsByLocalAddr(localAddr string) (Metrics, error) {
 		}
 		out.Value = v.Value[1].(string)
 		out.MetricName = v.Metric["__name__"]
+		metric := make(map[string]string)
 		for k, vv := range v.Metric {
-			out.Metric[k] = vv
+			metric[k] = vv
 		}
+		out.Metric = metric
 		output.Metric = append(output.Metric, out)
 	}
 	return output, nil
 }
 
 type MyMetric struct {
-	MetricName string
-	Metric     map[string]string
-	Value      string
+	MetricName string            `json:"metric_name"`
+	Metric     map[string]string `json:"metric"`
+	Value      string            `json:"value"`
 }
 
 type Metrics struct {
-	Metric []MyMetric
+	Metric []MyMetric `json:"metric"`
 }
