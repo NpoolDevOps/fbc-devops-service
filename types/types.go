@@ -172,7 +172,7 @@ type GetAllDevicesNumInput struct {
 
 type GetAllDevicesNumOutput struct {
 	WorkerNumber    uint64 `json:"worker_number"`
-	MinerNumber     uint64 `sjon:"miner_number"`
+	MinerNumber     uint64 `json:"miner_number"`
 	FullminerNumber uint64 `json:"fullminer_number"`
 	FullnodeNumber  uint64 `json:"fullnode_number"`
 	StorageNumber   uint64 `json:"storage_number"`
