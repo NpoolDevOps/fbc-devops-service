@@ -178,6 +178,14 @@ func (s *DevopsServer) Run() error {
 		},
 	})
 
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.DeviceMetricValueDiffByTimeAPI,
+		Method:   "POST",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.DeviceMetricValueDiffByTimeRequest(w, req)
+		},
+	})
+
 	log.Infof(log.Fields{}, "start http daemon at %v", s.config.Port)
 	httpdaemon.Run(s.config.Port)
 	return nil
