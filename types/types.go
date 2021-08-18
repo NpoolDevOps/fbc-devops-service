@@ -147,7 +147,7 @@ type MetricByTimeInput struct {
 	AuthCode  string   `json:"auth_code"`
 	QueryTime string   `json:"query_time"`
 	Metric    string   `json:"metric"`
-	Addresses []string `json:"address"`
+	Addresses []string `json:"addresses"`
 }
 
 type MetricByTimeOutput struct {
