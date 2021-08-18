@@ -621,11 +621,61 @@ func (s *DevopsServer) DeviceMetricByTimeRequest(w http.ResponseWriter, req *htt
 		myOutput.Value, err = gateway.GetMetricsByTime(input.QueryTime, address, input.Metric)
 		if err != nil {
 			log.Errorf(log.Fields{}, "query metric value by time error: %v", err)
-			myOutput.Value = ""
+			myOutput.Value = 0
 		}
 		myOutput.Address = address
 		output.Values = append(output.Values, myOutput)
 	}
 
 	return output, "", 0
+}
+
+func (s *DevopsServer) DeviceMetricValueDiffByTimeRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.DeviceMetricValueDiffByTimeInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "authcode is must", -3
+	}
+
+	_, err = authapi.UserInfo(authtypes.UserInfoInput{
+		AuthCode: input.AuthCode,
+	})
+
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	var beginSum float64
+	var endSum float64
+
+	for _, address := range input.Addresses {
+		if address == "" {
+			continue
+		}
+
+		outBegin, err := gateway.GetMetricsByTime(input.BeginTime, address, input.Metric)
+		if err != nil {
+			log.Errorf(log.Fields{}, "query metric value by time error: %v", err)
+			outBegin = 0
+		}
+		beginSum += outBegin
+
+		outEnd, err := gateway.GetMetricsByTime(input.EndTime, address, input.Metric)
+		if err != nil {
+			log.Errorf(log.Fields{}, "query metric value by time error: %v", err)
+			outEnd = 0
+		}
+		endSum += outEnd
+	}
+
+	return endSum - beginSum, "", 0
 }

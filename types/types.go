@@ -155,6 +155,14 @@ type MetricByTimeOutput struct {
 }
 
 type Value struct {
-	Address string `json:"address"`
-	Value   string `json:"value"`
+	Address string  `json:"address"`
+	Value   float64 `json:"value"`
+}
+
+type DeviceMetricValueDiffByTimeInput struct {
+	AuthCode  string   `json:"auth_code"`
+	Metric    string   `json:"metric"`
+	Addresses []string `json:"addresses"`
+	BeginTime string   `json:"begin_time"`
+	EndTime   string   `json:"end_time"`
 }

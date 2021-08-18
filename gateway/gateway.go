@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -177,7 +178,7 @@ type Metrics struct {
 	Metric []MyMetric `json:"metric"`
 }
 
-func GetMetricsByTime(queryTime, address, metric string) (string, error) {
+func GetMetricsByTime(queryTime, address, metric string) (float64, error) {
 	response := MetricResponse{}
 	query := "{instance=\"" + address + ":52379\"}"
 	query = strings.Replace(url.QueryEscape(query), "+", "%20", -1)
@@ -186,23 +187,25 @@ func GetMetricsByTime(queryTime, address, metric string) (string, error) {
 	resp, err := http.Get(fmt.Sprintf("http://%v/api/v1/query?query=%v", PrometheusSite, query))
 	if err != nil {
 		log.Errorf(log.Fields{}, "get info from prometheus error: %v", err)
-		return "", err
+		return 0, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
 	if len(response.Data.Result) == 0 {
-		return "", nil
+		return 0, nil
 	}
 
-	return response.Data.Result[0].Value[1].(string), nil
+	result, _ := strconv.ParseFloat(response.Data.Result[0].Value[1].(string), 64)
+
+	return result, nil
 
 }
