@@ -10,7 +10,6 @@ import (
 	log "github.com/EntropyPool/entropy-logger"
 	authapi "github.com/NpoolDevOps/fbc-auth-service/authapi"
 	authtypes "github.com/NpoolDevOps/fbc-auth-service/types"
-	peertypes "github.com/NpoolDevOps/fbc-devops-peer/types"
 	"github.com/NpoolDevOps/fbc-devops-service/gateway"
 	devopsmysql "github.com/NpoolDevOps/fbc-devops-service/mysql"
 	devopsredis "github.com/NpoolDevOps/fbc-devops-service/redis"
@@ -728,15 +727,15 @@ func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.
 	} else {
 		for _, device := range resp.(types.MyDevicesOutput).Devices {
 			switch device.Role {
-			case peertypes.MinerNode:
+			case types.MinerNode:
 				output.MinerNumber += 1
-			case peertypes.FullMinerNode:
+			case types.FullMinerNode:
 				output.FullminerNumber += 1
-			case peertypes.FullNode:
+			case types.FullNode:
 				output.FullnodeNumber += 1
-			case peertypes.WorkerNode:
+			case types.WorkerNode:
 				output.WorkerNumber += 1
-			case peertypes.StorageNode:
+			case types.StorageNode:
 				output.StorageNumber += 1
 			}
 		}

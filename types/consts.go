@@ -17,3 +17,11 @@ const (
 	DeviceMetricValueDiffByTimeAPI = "/api/v0/device/metric/value/diff/by/time"
 	GetAllDevicesNumAPI            = "/api/v0/get/devices/num"
 )
+
+const (
+	FullNode      = "fullnode"
+	MinerNode     = "miner"
+	FullMinerNode = "fullminer"
+	WorkerNode    = "worker"
+	StorageNode   = "storage"
+)
