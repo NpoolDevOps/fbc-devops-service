@@ -170,6 +170,14 @@ func (s *DevopsServer) Run() error {
 		},
 	})
 
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.DeviceMetricByTimeAPI,
+		Method:   "POST",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.DeviceMetricByTimeRequest(w, req)
+		},
+	})
+
 	log.Infof(log.Fields{}, "start http daemon at %v", s.config.Port)
 	httpdaemon.Run(s.config.Port)
 	return nil
@@ -544,13 +552,13 @@ func (s *DevopsServer) MinerDeviceListRequest(w http.ResponseWriter, req *http.R
 	if code != 0 {
 		return nil, message, code
 	}
-	for _, item := range infoOutput.([]types.DeviceAttribute) {
+	for _, item := range infoOutput.(types.MyDevicesOutput).Devices {
 		if item.Role == "miner" || item.Role == "fullminer" {
 			output = append(output, item)
 		}
 	}
 
-	return types.MinerDeviceListOutput{
+	return types.MyDevicesOutput{
 		Devices: output,
 	}, "", 0
 
@@ -574,6 +582,46 @@ func (s *DevopsServer) DeviceMetricsByAddressRequest(w http.ResponseWriter, req 
 	output, err := gateway.GetMetricsByLocalAddr(input.Address)
 	if err != nil {
 		return nil, err.Error(), -4
+	}
+
+	return output, "", 0
+}
+
+func (s *DevopsServer) DeviceMetricByTimeRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.MetricByTimeInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "authcode is must", -3
+	}
+
+	_, err = authapi.UserInfo(authtypes.UserInfoInput{
+		AuthCode: input.AuthCode,
+	})
+
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	var output types.MetricByTimeOutput
+
+	for _, address := range input.Addresses {
+		myOutput := types.Value{}
+		myOutput.Value, err = gateway.GetMetricsByTime(input.QueryTime, address, input.Metric)
+		if err != nil {
+			log.Errorf(log.Fields{}, "query metric value by time error: %v", err)
+			myOutput.Value = ""
+		}
+		myOutput.Address = address
+		output.Values = append(output.Values, myOutput)
 	}
 
 	return output, "", 0

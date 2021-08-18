@@ -1,2 +1,3 @@
 fbc-devops-service
 /main
+/gateway/gateway_test.go

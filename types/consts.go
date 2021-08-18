@@ -13,4 +13,5 @@ const (
 	DeviceMetricsDataAPI      = "/api/v0/device/metricsdata"
 	MinerDeviceListAPI        = "/api/v0/miner/device/list"
 	DeviceMetricsByAddressAPI = "/api/v0/device/metrics/by/address"
+	DeviceMetricByTimeAPI     = "/api/v0/device/metric/by/time"
 )

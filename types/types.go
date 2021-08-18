@@ -142,3 +142,19 @@ type MetricsByAddr struct {
 	AuthCode string `json:"auth_code"`
 	Address  string `json:"address"`
 }
+
+type MetricByTimeInput struct {
+	AuthCode  string   `json:"auth_code"`
+	QueryTime string   `json:"query_time"`
+	Metric    string   `json:"metric"`
+	Addresses []string `json:"address"`
+}
+
+type MetricByTimeOutput struct {
+	Values []Value `json:"values"`
+}
+
+type Value struct {
+	Address string `json:"address"`
+	Value   string `json:"value"`
+}

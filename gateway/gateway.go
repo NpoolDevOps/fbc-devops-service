@@ -13,6 +13,10 @@ import (
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
 )
 
+const (
+	PrometheusSite = "106.14.125.55:9988"
+)
+
 type MetricResponse struct {
 	Status string     `json:"status"`
 	Data   MetricData `json:"data"`
@@ -49,7 +53,7 @@ func GetMetrics(metrics []string) ([]types.Outresp, error) {
 	var output []types.Outresp
 	for _, metric := range metrics {
 		result := MetricResponse{}
-		resp, err := http.Get(fmt.Sprintf("http://47.99.107.242:9090/api/v1/query?query=%v", metric))
+		resp, err := http.Get(fmt.Sprintf("http://%v/api/v1/query?query=%v", PrometheusSite, metric))
 		if err != nil {
 			log.Errorf(log.Fields{}, "get info from prometheus err: %v", err)
 			return nil, err
@@ -87,7 +91,7 @@ func GetMetricsData(metrics []string, startTime, endTime, step string) (types.De
 
 	for _, metric := range metrics {
 		result := MetricDataResponse{}
-		resp, err := http.Get(fmt.Sprintf("http://47.99.107.242:9090/api/v1/query_range?query=%v&start=%v&end=%v&step=%v", metric, startTime, endTime, step))
+		resp, err := http.Get(fmt.Sprintf("http://%v/api/v1/query_range?query=%v&start=%v&end=%v&step=%v", PrometheusSite, metric, startTime, endTime, step))
 		if err != nil {
 			log.Errorf(log.Fields{}, "get info from prometheus err: %v", err)
 			return types.DeviceMetricsDataOutput{}, err
@@ -129,7 +133,7 @@ func GetMetricsByLocalAddr(localAddr string) (Metrics, error) {
 	result := MetricResponse{}
 	query := "{instance=\"" + localAddr + ":52379\"}"
 	query = strings.Replace(url.QueryEscape(query), "+", "%20", -1)
-	resp, err := http.Get(fmt.Sprintf("http://106.14.125.55:9988/api/v1/query?query=%v", query))
+	resp, err := http.Get(fmt.Sprintf("http://%v/api/v1/query?query=%v", PrometheusSite, query))
 	if err != nil {
 		log.Errorf(log.Fields{}, "get info from prometheus error: %v", err)
 		return Metrics{}, err
@@ -148,7 +152,7 @@ func GetMetricsByLocalAddr(localAddr string) (Metrics, error) {
 
 	for _, v := range result.Data.Result {
 		out := MyMetric{}
-		if strings.HasPrefix(v.Metric["__name__"], "go_") || strings.HasPrefix(v.Metric["__name__"], "process_") || strings.HasPrefix(v.Metric["__name__"], "promhttp_") || v.Metric["__name__"] == "up" {
+		if strings.HasPrefix(v.Metric["__name__"], "go_") || strings.HasPrefix(v.Metric["__name__"], "process_") || strings.HasPrefix(v.Metric["__name__"], "promhttp_") || v.Metric["__name__"] == "up" || v.Metric["__name__"] == "miner_seal_sector_task_progress" {
 			continue
 		}
 		out.Value = v.Value[1].(string)
@@ -171,4 +175,31 @@ type MyMetric struct {
 
 type Metrics struct {
 	Metric []MyMetric `json:"metric"`
+}
+
+func GetMetricsByTime(queryTime, address, metric string) (string, error) {
+	response := MetricResponse{}
+	query := "{instance=\"" + address + ":52379\"}"
+	query = strings.Replace(url.QueryEscape(query), "+", "%20", -1)
+	query = metric + query + "&" + "time=" + queryTime
+	fmt.Println("query is", query)
+
+	resp, err := http.Get(fmt.Sprintf("http://%v/api/v1/query?query=%v", PrometheusSite, query))
+	if err != nil {
+		log.Errorf(log.Fields{}, "get info from prometheus error: %v", err)
+		return "", err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Data.Result[0].Value[1].(string), nil
+
 }
