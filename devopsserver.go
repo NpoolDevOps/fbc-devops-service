@@ -10,6 +10,7 @@ import (
 	log "github.com/EntropyPool/entropy-logger"
 	authapi "github.com/NpoolDevOps/fbc-auth-service/authapi"
 	authtypes "github.com/NpoolDevOps/fbc-auth-service/types"
+	peertypes "github.com/NpoolDevOps/fbc-devops-peer/types"
 	"github.com/NpoolDevOps/fbc-devops-service/gateway"
 	devopsmysql "github.com/NpoolDevOps/fbc-devops-service/mysql"
 	devopsredis "github.com/NpoolDevOps/fbc-devops-service/redis"
@@ -183,6 +184,14 @@ func (s *DevopsServer) Run() error {
 		Method:   "POST",
 		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 			return s.DeviceMetricValueDiffByTimeRequest(w, req)
+		},
+	})
+
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.GetAllDevicesNumAPI,
+		Method:   "POST",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.GetAllDevicesNumRequest(w, req)
 		},
 	})
 
@@ -686,4 +695,51 @@ func (s *DevopsServer) DeviceMetricValueDiffByTimeRequest(w http.ResponseWriter,
 	}
 
 	return endSum - beginSum, "", 0
+}
+
+func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.MyDevicesByAuthInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	user, err := authapi.UserInfo(authtypes.UserInfoInput{
+		AuthCode: input.AuthCode,
+	})
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	var output types.GetAllDevicesNumOutput
+
+	resp, _, code := s.myDevicesByUserInfo(user)
+	if code != 0 {
+		return nil, "", code
+	} else {
+		for _, device := range resp.(types.MyDevicesOutput).Devices {
+			switch device.Role {
+			case peertypes.MinerNode:
+				output.MinerNumber += 1
+			case peertypes.FullMinerNode:
+				output.FullminerNumber += 1
+			case peertypes.FullNode:
+				output.FullnodeNumber += 1
+			case peertypes.WorkerNode:
+				output.WorkerNumber += 1
+			case peertypes.StorageNode:
+				output.StorageNumber += 1
+			}
+		}
+		return output, "", 0
+	}
 }

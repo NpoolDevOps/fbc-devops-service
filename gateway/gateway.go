@@ -153,7 +153,7 @@ func GetMetricsByLocalAddr(localAddr string) (Metrics, error) {
 
 	for _, v := range result.Data.Result {
 		out := MyMetric{}
-		if strings.HasPrefix(v.Metric["__name__"], "go_") || strings.HasPrefix(v.Metric["__name__"], "process_") || strings.HasPrefix(v.Metric["__name__"], "promhttp_") || v.Metric["__name__"] == "up" || v.Metric["__name__"] == "miner_seal_sector_task_progress" {
+		if strings.HasPrefix(v.Metric["__name__"], "go_") || strings.HasPrefix(v.Metric["__name__"], "process_") || strings.HasPrefix(v.Metric["__name__"], "promhttp_") || v.Metric["__name__"] == "miner_seal_sector_task_progress" {
 			continue
 		}
 		out.Value = v.Value[1].(string)
