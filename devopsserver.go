@@ -614,6 +614,9 @@ func (s *DevopsServer) DeviceMetricByTimeRequest(w http.ResponseWriter, req *htt
 	var output types.MetricByTimeOutput
 
 	for _, address := range input.Addresses {
+		if address == "" {
+			continue
+		}
 		myOutput := types.Value{}
 		myOutput.Value, err = gateway.GetMetricsByTime(input.QueryTime, address, input.Metric)
 		if err != nil {

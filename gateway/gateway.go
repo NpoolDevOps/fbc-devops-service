@@ -182,7 +182,6 @@ func GetMetricsByTime(queryTime, address, metric string) (string, error) {
 	query := "{instance=\"" + address + ":52379\"}"
 	query = strings.Replace(url.QueryEscape(query), "+", "%20", -1)
 	query = metric + query + "&" + "time=" + queryTime
-	fmt.Println("query is", query)
 
 	resp, err := http.Get(fmt.Sprintf("http://%v/api/v1/query?query=%v", PrometheusSite, query))
 	if err != nil {
@@ -198,6 +197,10 @@ func GetMetricsByTime(queryTime, address, metric string) (string, error) {
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return "", err
+	}
+
+	if len(response.Data.Result) == 0 {
+		return "", nil
 	}
 
 	return response.Data.Result[0].Value[1].(string), nil
