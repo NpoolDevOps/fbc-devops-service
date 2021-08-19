@@ -210,10 +210,11 @@ func GetMetricsByTime(queryTime, address, metric string) (float64, error) {
 
 }
 
-func GetMetricValueByAddress(address, metric string) (uint64, error) {
+func GetMetricValueByAddress(address, metric string) (float64, error) {
 	response := MetricResponse{}
 	query := "{instance=\"" + address + ":52379\"}"
-	query = metric + "&" + strings.Replace(url.QueryEscape(query), "+", "%20", -1)
+	query = metric + strings.Replace(url.QueryEscape(query), "+", "%20", -1)
+	fmt.Println("query is", query)
 
 	resp, err := http.Get(fmt.Sprintf("http://%v/api/v1/query?query=%v", PrometheusSite, query))
 	if err != nil {
@@ -234,8 +235,7 @@ func GetMetricValueByAddress(address, metric string) (uint64, error) {
 	if len(response.Data.Result) == 0 {
 		return 0, nil
 	}
-
-	result, _ := strconv.ParseUint(response.Data.Result[0].Value[1].(string), 10, 64)
+	result, _ := strconv.ParseFloat(response.Data.Result[0].Value[1].(string), 64)
 
 	return result, nil
 
