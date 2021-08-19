@@ -738,35 +738,35 @@ func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.
 			switch device.Role {
 			case types.MinerNode:
 				output.All.MinerNumber += 1
-				if err != nil && status == 0 {
+				if err != nil || status == 0 {
 					output.Down.MinerDownNumber += 1
 				} else {
 					output.Up.MinerUpNumber += 1
 				}
 			case types.FullMinerNode:
 				output.All.FullminerNumber += 1
-				if err != nil && status == 0 {
+				if err != nil || status == 0 {
 					output.Down.FullminerDownNumber += 1
 				} else {
 					output.Up.FullminerUpNumber += 1
 				}
 			case types.FullNode:
 				output.All.FullnodeNumber += 1
-				if err != nil && status == 0 {
+				if err != nil || status == 0 {
 					output.Down.FullnodeDownNumber += 1
 				} else {
 					output.Up.FullnodeUpNumber += 1
 				}
 			case types.WorkerNode:
 				output.All.WorkerNumber += 1
-				if err != nil && status == 0 {
+				if err != nil || status == 0 {
 					output.Down.WorkerDownNumber += 1
 				} else {
 					output.Up.WorkerUpNumber += 1
 				}
 			case types.StorageNode:
 				output.All.StorageNumber += 1
-				if err != nil && status == 0 {
+				if err != nil || status == 0 {
 					output.Down.StorageDownNumber += 1
 				} else {
 					output.Up.StorageUpNumber += 1
