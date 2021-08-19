@@ -569,9 +569,10 @@ func (s *DevopsServer) MinerDeviceListRequest(w http.ResponseWriter, req *http.R
 		return nil, message, code
 	}
 	for _, item := range infoOutput.(types.MyDevicesOutput).Devices {
-		for _, o := range output {
+		for index, o := range output {
 			if item.LocalAddr == o.LocalAddr {
-				continue
+				output = append(output[:index], output[index+1:]...)
+				break
 			}
 		}
 		if item.Role == "miner" || item.Role == "fullminer" {
