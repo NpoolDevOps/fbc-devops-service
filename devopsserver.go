@@ -461,6 +461,12 @@ func (s *DevopsServer) myDevicesByUserInfo(user *authtypes.UserInfoOutput) (inte
 			oInfo.LocalAddr = device.LocalAddr
 			oInfo.PublicAddr = device.PublicAddr
 		}
+		for index, myDevice := range output.Devices {
+			if myDevice.LocalAddr == device.LocalAddr {
+				output.Devices = append(output.Devices[:index], output.Devices[index+1:]...)
+				break
+			}
+		}
 
 		output.Devices = append(output.Devices, oInfo)
 	}
@@ -569,12 +575,6 @@ func (s *DevopsServer) MinerDeviceListRequest(w http.ResponseWriter, req *http.R
 		return nil, message, code
 	}
 	for _, item := range infoOutput.(types.MyDevicesOutput).Devices {
-		for index, o := range output {
-			if item.LocalAddr == o.LocalAddr {
-				output = append(output[:index], output[index+1:]...)
-				break
-			}
-		}
 		if item.Role == "miner" || item.Role == "fullminer" {
 			output = append(output, item)
 		}
