@@ -171,9 +171,31 @@ type GetAllDevicesNumInput struct {
 }
 
 type GetAllDevicesNumOutput struct {
+	All  AllDeviceNum  `json:"all"`
+	Down DownDeviceNum `json:"down"`
+	Up   UpDeviceNum   `json:"up"`
+}
+
+type AllDeviceNum struct {
 	WorkerNumber    uint64 `json:"worker_number"`
 	MinerNumber     uint64 `json:"miner_number"`
 	FullminerNumber uint64 `json:"fullminer_number"`
 	FullnodeNumber  uint64 `json:"fullnode_number"`
 	StorageNumber   uint64 `json:"storage_number"`
+}
+
+type UpDeviceNum struct {
+	WorkerUpNumber    uint64 `json:"worker_up_number"`
+	MinerUpNumber     uint64 `json:"miner_up_number"`
+	FullminerUpNumber uint64 `json:"fullminer_up_number"`
+	FullnodeUpNumber  uint64 `json:"fullnode_up_number"`
+	StorageUpNumber   uint64 `json:"storage_up_number"`
+}
+
+type DownDeviceNum struct {
+	WorkerDownNumber    uint64 `json:"worker_down_number"`
+	MinerDownNumber     uint64 `json:"miner_down_number"`
+	FullminerDownNumber uint64 `json:"fullminer_down_number"`
+	FullnodeDownNumber  uint64 `json:"fullnode_down_number"`
+	StorageDownNumber   uint64 `json:"storage_down_number"`
 }

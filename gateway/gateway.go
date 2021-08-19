@@ -209,3 +209,34 @@ func GetMetricsByTime(queryTime, address, metric string) (float64, error) {
 	return result, nil
 
 }
+
+func GetMetricValueByAddress(address, metric string) (uint64, error) {
+	response := MetricResponse{}
+	query := "{instance=\"" + address + ":52379\"}"
+	query = metric + "&" + strings.Replace(url.QueryEscape(query), "+", "%20", -1)
+
+	resp, err := http.Get(fmt.Sprintf("http://%v/api/v1/query?query=%v", PrometheusSite, query))
+	if err != nil {
+		log.Errorf(log.Fields{}, "get info from prometheus error: %v", err)
+		return 0, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(response.Data.Result) == 0 {
+		return 0, nil
+	}
+
+	result, _ := strconv.ParseUint(response.Data.Result[0].Value[1].(string), 10, 64)
+
+	return result, nil
+
+}

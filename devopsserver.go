@@ -726,18 +726,47 @@ func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.
 		return nil, "", code
 	} else {
 		for _, device := range resp.(types.MyDevicesOutput).Devices {
+
+			status, err := gateway.GetMetricValueByAddress(device.LocalAddr, "up")
+
 			switch device.Role {
 			case types.MinerNode:
-				output.MinerNumber += 1
+				output.All.MinerNumber += 1
+				if err != nil && status == 0 {
+					output.Down.MinerDownNumber += 1
+				} else {
+					output.Up.MinerUpNumber += 1
+				}
 			case types.FullMinerNode:
-				output.FullminerNumber += 1
+				output.All.FullminerNumber += 1
+				if err != nil && status == 0 {
+					output.Down.FullminerDownNumber += 1
+				} else {
+					output.Up.FullminerUpNumber += 1
+				}
 			case types.FullNode:
-				output.FullnodeNumber += 1
+				output.All.FullnodeNumber += 1
+				if err != nil && status == 0 {
+					output.Down.FullnodeDownNumber += 1
+				} else {
+					output.Up.FullnodeUpNumber += 1
+				}
 			case types.WorkerNode:
-				output.WorkerNumber += 1
+				output.All.WorkerNumber += 1
+				if err != nil && status == 0 {
+					output.Down.WorkerDownNumber += 1
+				} else {
+					output.Up.WorkerUpNumber += 1
+				}
 			case types.StorageNode:
-				output.StorageNumber += 1
+				output.All.StorageNumber += 1
+				if err != nil && status == 0 {
+					output.Down.StorageDownNumber += 1
+				} else {
+					output.Up.StorageUpNumber += 1
+				}
 			}
+
 		}
 		return output, "", 0
 	}
