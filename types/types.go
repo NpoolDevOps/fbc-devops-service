@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type DeviceRegisterInput struct {
+type DeviceBaseConfig struct {
 	Id            uuid.UUID `gorm:"column:id" json:"id,empty"`
 	Spec          string    `gorm:"column:spec" json:"spec"`
 	ParentSpec    string    `gorm:"column:parent_spec" json:"parent_spec"`
@@ -27,12 +27,22 @@ type DeviceRegisterInput struct {
 	EthernetCount int       `gorm:"column:ethernet_count" json:"ethernet_count"`
 	EthernetDesc  []string  `gorm:"column:ethernet_desc" json:"ethernet_desc"`
 	OsSpec        string    `gorm:"column:os_spec" json:"os_spec"`
-	LocalAddr     string    `json:"local_addr"`
-	PublicAddr    string    `json:"public_addr"`
 	Versions      []string  `json:"versions"`
 }
 
-type DeviceConfig = DeviceRegisterInput
+type DeviceRegisterInput struct {
+	DeviceBaseConfig
+	LocalAddresses  []string `json:"local_addresses"`
+	PublicAddresses []string `json:"public_addresses"`
+}
+
+type DeviceAllConfig = DeviceRegisterInput
+
+type DeviceConfig struct {
+	DeviceBaseConfig
+	LocalAddr  string `json:"local_addr"`
+	PublicAddr string `json:"public_addr"`
+}
 
 type DeviceCommonOutput struct {
 	Id uuid.UUID `json:"id"`
@@ -43,14 +53,14 @@ type DeviceRegisterOutput struct {
 }
 
 type DeviceReportInput struct {
-	Id          uuid.UUID `json:"id"`
-	NvmeCount   int       `json:"nvme_count"`
-	GpuCount    int       `json:"gpu_count"`
-	MemoryCount int       `json:"memory_count"`
-	MemorySize  uint64    `json:"memory_size"`
-	HddCount    int       `gorm:"column:hdd_count" json:"hdd_count"`
-	LocalAddr   string    `json:"local_addr"`
-	PublicAddr  string    `json:"public_addr"`
+	Id              uuid.UUID `json:"id"`
+	NvmeCount       int       `json:"nvme_count"`
+	GpuCount        int       `json:"gpu_count"`
+	MemoryCount     int       `json:"memory_count"`
+	MemorySize      uint64    `json:"memory_size"`
+	HddCount        int       `gorm:"column:hdd_count" json:"hdd_count"`
+	LocalAddresses  []string  `json:"local_addresses"`
+	PublicAddresses []string  `json:"public_addresses"`
 }
 
 type DeviceReportOutput struct {

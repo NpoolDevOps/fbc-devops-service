@@ -247,10 +247,10 @@ func (s *DevopsServer) DeviceReportRequest(w http.ResponseWriter, req *http.Requ
 	device.MemoryCount = input.MemoryCount
 	device.MemorySize = input.MemorySize
 	device.HddCount = input.HddCount
-	device.LocalAddr = input.LocalAddr
-	device.PublicAddr = input.LocalAddr
+	device.LocalAddresses = input.LocalAddresses
+	device.PublicAddresses = input.LocalAddresses
 
-	err = s.redisClient.InsertKeyInfo("device", input.Id, input, 2*time.Hour)
+	err = s.redisClient.InsertKeyInfo("device", input.Id, device, 2*time.Hour)
 	if err != nil {
 		return nil, err.Error(), -3
 	}
@@ -410,8 +410,12 @@ func (s *DevopsServer) myDevicesByUserInfo(user *authtypes.UserInfoOutput) (inte
 			oInfo.RuntimeMemoryCount = device.MemoryCount
 			oInfo.RuntimeMemorySize = device.MemorySize
 			oInfo.RuntimeHddCount = device.HddCount
-			oInfo.LocalAddr = device.LocalAddr
-			oInfo.PublicAddr = device.PublicAddr
+			for index, localAddr := range device.LocalAddresses {
+				oInfo.LocalAddr = localAddr
+				oInfo.PublicAddr = device.PublicAddresses[index]
+				output.Devices = append(output.Devices, oInfo)
+			}
+			continue
 		}
 
 		output.Devices = append(output.Devices, oInfo)

@@ -77,12 +77,12 @@ func (cli *RedisCli) InsertKeyInfo(keyWord string, id uuid.UUID, info interface{
 	return nil
 }
 
-func (cli *RedisCli) QueryDevice(cid uuid.UUID) (*types.DeviceConfig, error) {
+func (cli *RedisCli) QueryDevice(cid uuid.UUID) (*types.DeviceAllConfig, error) {
 	val, err := cli.client.Get(fmt.Sprintf("%v:device:%v", redisKeyPrefix, cid)).Result()
 	if err != nil {
 		return nil, err
 	}
-	info := &types.DeviceConfig{}
+	info := &types.DeviceAllConfig{}
 	err = json.Unmarshal([]byte(val), info)
 	if err != nil {
 		return nil, err
