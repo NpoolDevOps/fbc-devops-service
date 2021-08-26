@@ -18,6 +18,7 @@ import (
 	lictypes "github.com/NpoolDevOps/fbc-license-service/types"
 	httpdaemon "github.com/NpoolRD/http-daemon"
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 )
 
 type DevopsConfig struct {
@@ -147,14 +148,6 @@ func (s *DevopsServer) Run() error {
 	})
 
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
-		Location: types.DeviceMetricsDataAPI,
-		Method:   "POST",
-		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
-			return s.DeviceMetricsDataRequest(w, req)
-		},
-	})
-
-	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
 		Location: types.MinerDeviceListAPI,
 		Method:   "POST",
 		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
@@ -191,6 +184,14 @@ func (s *DevopsServer) Run() error {
 		Method:   "POST",
 		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 			return s.GetAllDevicesNumRequest(w, req)
+		},
+	})
+
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.WebSocketGetBlockAPI,
+		Method:   "Get",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.socketHandler(w, req)
 		},
 	})
 
@@ -514,36 +515,6 @@ func (s *DevopsServer) DevicesMetricsRequest(w http.ResponseWriter, req *http.Re
 	}, "", 0
 }
 
-func (s *DevopsServer) DeviceMetricsDataRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
-	b, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return nil, err.Error(), -1
-	}
-	input := types.DeviceMetricsDataInput{}
-	err = json.Unmarshal(b, &input)
-	if err != nil {
-		return nil, err.Error(), -2
-	}
-
-	if input.AuthCode == "" {
-		return nil, "auth code is must", -3
-	}
-
-	_, err = authapi.UserInfo(authtypes.UserInfoInput{
-		AuthCode: input.AuthCode,
-	})
-	if err != nil {
-		return nil, err.Error(), -4
-	}
-
-	output, err := gateway.GetMetricsData(input.Metrics, input.StartTime, input.EndTime, input.Step)
-	if err != nil {
-		return nil, err.Error(), -5
-	}
-
-	return output, "", 0
-}
-
 func (s *DevopsServer) MinerDeviceListRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -776,4 +747,51 @@ func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.
 		}
 		return output, "", 0
 	}
+}
+
+func (s *DevopsServer) socketHandler(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	var upgrader = websocket.Upgrader{}
+	if websocket.IsWebSocketUpgrade(req) {
+		conn, err := upgrader.Upgrade(w, req, nil)
+		if err != nil {
+			log.Errorf(log.Fields{}, "error during connection upgrade: %v", err)
+			return nil, err.Error(), -1
+		}
+		defer conn.Close()
+
+		go func() {
+			for {
+				nowTime := time.Now().Unix()
+				results, err := gateway.GetDevicesMetricsDiffByTime([]string{"miner_block_produced"}, nowTime-60*int64(time.Second), nowTime)
+				if err != nil {
+					log.Errorf(log.Fields{}, "error during get block info from prometheus: %v", err)
+				}
+
+				answers := []gateway.DeviceMetricByTime{}
+
+				for _, result := range results[0].Results {
+					answer := gateway.DeviceMetricByTime{}
+					if result.Diff <= 0 {
+						continue
+					}
+					answer.Diff = result.Diff
+					answer.Instance = result.Instance
+					answers = append(answers, answer)
+				}
+
+				byteAnswer, err := json.Marshal(answers)
+				if err != nil {
+					log.Errorf(log.Fields{}, "fail to marshal answers: %v", err)
+				}
+
+				err = conn.WriteMessage(websocket.TextMessage, byteAnswer)
+				if err != nil {
+					log.Errorf(log.Fields{}, "Error during message writing: %v", err)
+				}
+			}
+		}()
+	} else {
+		return nil, "", 0
+	}
+	return nil, "", -2
 }
