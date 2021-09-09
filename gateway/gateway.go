@@ -44,23 +44,15 @@ type MetricResult struct {
 	Metric map[string]string `json:"metric"`
 	Value  []interface{}     `json:"value"`
 }
-type MetricDataResponse struct {
-	Status string         `json:"status"`
-	Data   MetricDataData `json:"data"`
+
+type MyMetric struct {
+	MetricName string            `json:"metric_name"`
+	Metric     map[string]string `json:"metric"`
+	Value      string            `json:"value"`
 }
 
-type MetricDataData struct {
-	Result []MetricDataResult `json:"result"`
-}
-
-type MetricDataResult struct {
-	Metric Metric          `json:"metric"`
-	Values [][]interface{} `json:"values"`
-}
-
-type Metric struct {
-	Instance string `json:"instance"`
-	Job      string `json:"job"`
+type Metrics struct {
+	Metric []MyMetric `json:"metric"`
 }
 
 func GetMetrics(metrics []string) ([]types.Outresp, error) {
@@ -124,16 +116,6 @@ func GetMetricsByLocalAddr(localAddr string) (Metrics, error) {
 		output.Metric = append(output.Metric, out)
 	}
 	return output, nil
-}
-
-type MyMetric struct {
-	MetricName string            `json:"metric_name"`
-	Metric     map[string]string `json:"metric"`
-	Value      string            `json:"value"`
-}
-
-type Metrics struct {
-	Metric []MyMetric `json:"metric"`
 }
 
 func GetMetricsByTime(queryTime, address, metric string) (float64, error) {

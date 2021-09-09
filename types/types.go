@@ -160,29 +160,27 @@ type Value struct {
 }
 
 type DeviceMetricValueDiffByTimeInput struct {
-	AuthCode  string   `json:"auth_code"`
-	Metric    string   `json:"metric"`
-	Addresses []string `json:"addresses"`
-	BeginTime string   `json:"begin_time"`
-	EndTime   string   `json:"end_time"`
+	AuthCode  string `json:"auth_code"`
+	Metric    string `json:"metric"`
+	TimeRange string `json:"time_range"`
 }
 
 type GetAllDevicesNumInput struct {
 }
 
 type GetAllDevicesNumOutput struct {
-	All  AllDeviceNum  `json:"all"`
+	All  uint64        `json:"all"`
 	Down DownDeviceNum `json:"down"`
 	Up   UpDeviceNum   `json:"up"`
 }
 
-type AllDeviceNum struct {
-	WorkerNumber    uint64 `json:"worker_number"`
-	MinerNumber     uint64 `json:"miner_number"`
-	FullminerNumber uint64 `json:"fullminer_number"`
-	FullnodeNumber  uint64 `json:"fullnode_number"`
-	StorageNumber   uint64 `json:"storage_number"`
-}
+// type AllDeviceNum struct {
+// 	WorkerNumber    uint64 `json:"worker_number"`
+// 	MinerNumber     uint64 `json:"miner_number"`
+// 	FullminerNumber uint64 `json:"fullminer_number"`
+// 	FullnodeNumber  uint64 `json:"fullnode_number"`
+// 	StorageNumber   uint64 `json:"storage_number"`
+// }
 
 type UpDeviceNum struct {
 	WorkerUpNumber    uint64 `json:"worker_up_number"`
@@ -198,4 +196,21 @@ type DownDeviceNum struct {
 	FullminerDownNumber uint64 `json:"fullminer_down_number"`
 	FullnodeDownNumber  uint64 `json:"fullnode_down_number"`
 	StorageDownNumber   uint64 `json:"storage_down_number"`
+}
+
+type GetDeviceBlockInfosInput struct {
+	AuthCode  string `json:"auth_code"`
+	TimeRange string `json:"time_range"`
+}
+
+type BlockInfo struct {
+	LocalAddr     string `json:"local_addr"`
+	BlockProduced uint64 `json:"block_produced"`
+	BlockFailed   uint64 `json:"block_failed"`
+	BlockTimeout  uint64 `json:"block_timeout"`
+	BlockForked   uint64 `json:"block_forked"`
+}
+
+type GetDeviceBlockInfosOutput struct {
+	BlockInfos []BlockInfo `json:"block_infos"`
 }

@@ -12,13 +12,13 @@ import (
 	authtypes "github.com/NpoolDevOps/fbc-auth-service/types"
 	"github.com/NpoolDevOps/fbc-devops-service/gateway"
 	devopsmysql "github.com/NpoolDevOps/fbc-devops-service/mysql"
+	"github.com/NpoolDevOps/fbc-devops-service/prometheus"
 	devopsredis "github.com/NpoolDevOps/fbc-devops-service/redis"
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
 	licapi "github.com/NpoolDevOps/fbc-license-service/licenseapi"
 	lictypes "github.com/NpoolDevOps/fbc-license-service/types"
 	httpdaemon "github.com/NpoolRD/http-daemon"
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 )
 
 type DevopsConfig struct {
@@ -188,10 +188,10 @@ func (s *DevopsServer) Run() error {
 	})
 
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
-		Location: types.WebSocketGetBlockAPI,
-		Method:   "Get",
+		Location: types.GetDeviceBlockInfosAPI,
+		Method:   "POST",
 		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
-			return s.socketHandler(w, req)
+			return s.GetDeviceBlockInfosRequest(w, req)
 		},
 	})
 
@@ -647,30 +647,12 @@ func (s *DevopsServer) DeviceMetricValueDiffByTimeRequest(w http.ResponseWriter,
 		return nil, err.Error(), -4
 	}
 
-	var beginSum float64
-	var endSum float64
-
-	for _, address := range input.Addresses {
-		if address == "" {
-			continue
-		}
-
-		outBegin, err := gateway.GetMetricsByTime(input.BeginTime, address, input.Metric)
-		if err != nil {
-			log.Errorf(log.Fields{}, "query metric value by time error: %v", err)
-			outBegin = 0
-		}
-		beginSum += outBegin
-
-		outEnd, err := gateway.GetMetricsByTime(input.EndTime, address, input.Metric)
-		if err != nil {
-			log.Errorf(log.Fields{}, "query metric value by time error: %v", err)
-			outEnd = 0
-		}
-		endSum += outEnd
+	resp, err := prometheus.GetMetricsValueDelta(input.Metric, "", input.TimeRange)
+	if err != nil {
+		return nil, err.Error(), -5
 	}
 
-	return endSum - beginSum, "", 0
+	return resp, "", 0
 }
 
 func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
@@ -689,7 +671,7 @@ func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.
 		return nil, "auth code is must", -3
 	}
 
-	user, err := authapi.UserInfo(authtypes.UserInfoInput{
+	_, err = authapi.UserInfo(authtypes.UserInfoInput{
 		AuthCode: input.AuthCode,
 	})
 	if err != nil {
@@ -698,100 +680,192 @@ func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.
 
 	var output types.GetAllDevicesNumOutput
 
-	resp, _, code := s.myDevicesByUserInfo(user)
-	if code != 0 {
-		return nil, "", code
-	} else {
-		for _, device := range resp.(types.MyDevicesOutput).Devices {
+	var resp []prometheus.UpNum
+	var allNum uint64
 
-			status, err := gateway.GetMetricValueByAddress(device.LocalAddr, "up")
+	resp, err = prometheus.GetDeviceUpNumByJob("")
+	allNum, err = prometheus.GetDeviceUpTotalNum("")
 
-			switch device.Role {
-			case types.MinerNode:
-				output.All.MinerNumber += 1
-				if err != nil || status == 0 {
-					output.Down.MinerDownNumber += 1
-				} else {
-					output.Up.MinerUpNumber += 1
-				}
-			case types.FullMinerNode:
-				output.All.FullminerNumber += 1
-				if err != nil || status == 0 {
-					output.Down.FullminerDownNumber += 1
-				} else {
-					output.Up.FullminerUpNumber += 1
-				}
-			case types.FullNode:
-				output.All.FullnodeNumber += 1
-				if err != nil || status == 0 {
-					output.Down.FullnodeDownNumber += 1
-				} else {
-					output.Up.FullnodeUpNumber += 1
-				}
-			case types.WorkerNode:
-				output.All.WorkerNumber += 1
-				if err != nil || status == 0 {
-					output.Down.WorkerDownNumber += 1
-				} else {
-					output.Up.WorkerUpNumber += 1
-				}
-			case types.StorageNode:
-				output.All.StorageNumber += 1
-				if err != nil || status == 0 {
-					output.Down.StorageDownNumber += 1
-				} else {
-					output.Up.StorageUpNumber += 1
-				}
-			}
+	if err != nil {
+		return nil, err.Error(), -5
+	}
+
+	for _, upNum := range resp {
+		switch upNum.Job {
+		case types.MinerNode:
+			output.Down.MinerDownNumber = upNum.DownDevice
+			output.Up.MinerUpNumber = upNum.UpDevice
+		case types.FullMinerNode:
+			output.Down.FullminerDownNumber = upNum.DownDevice
+			output.Up.FullminerUpNumber = upNum.UpDevice
+		case types.FullNode:
+			output.Down.FullnodeDownNumber = upNum.DownDevice
+			output.Up.FullnodeUpNumber = upNum.UpDevice
+		case types.WorkerNode:
+			output.Down.WorkerDownNumber = upNum.DownDevice
+			output.Up.WorkerUpNumber = upNum.UpDevice
+		case types.StorageNode:
+			output.Down.StorageDownNumber = upNum.DownDevice
+			output.Up.StorageUpNumber = upNum.UpDevice
 
 		}
-		return output, "", 0
 	}
+
+	output.All = allNum
+	return output, "", 0
+
+	// resp, _, code := s.myDevicesByUserInfo(user)
+	// if code != 0 {
+	// 	return nil, "", code
+	// } else {
+	// 	for _, device := range resp.(types.MyDevicesOutput).Devices {
+	// 		status, err := gateway.GetMetricValueByAddress(device.LocalAddr, "up")
+	// 		switch device.Role {
+	// 		case types.MinerNode:
+	// 			output.All.MinerNumber += 1
+	// 			if err != nil || status == 0 {
+	// 				output.Down.MinerDownNumber += 1
+	// 			} else {
+	// 				output.Up.MinerUpNumber += 1
+	// 			}
+	// 		case types.FullMinerNode:
+	// 			output.All.FullminerNumber += 1
+	// 			if err != nil || status == 0 {
+	// 				output.Down.FullminerDownNumber += 1
+	// 			} else {
+	// 				output.Up.FullminerUpNumber += 1
+	// 			}
+	// 		case types.FullNode:
+	// 			output.All.FullnodeNumber += 1
+	// 			if err != nil || status == 0 {
+	// 				output.Down.FullnodeDownNumber += 1
+	// 			} else {
+	// 				output.Up.FullnodeUpNumber += 1
+	// 			}
+	// 		case types.WorkerNode:
+	// 			output.All.WorkerNumber += 1
+	// 			if err != nil || status == 0 {
+	// 				output.Down.WorkerDownNumber += 1
+	// 			} else {
+	// 				output.Up.WorkerUpNumber += 1
+	// 			}
+	// 		case types.StorageNode:
+	// 			output.All.StorageNumber += 1
+	// 			if err != nil || status == 0 {
+	// 				output.Down.StorageDownNumber += 1
+	// 			} else {
+	// 				output.Up.StorageUpNumber += 1
+	// 			}
+	// 		}
+	// 	}
+	// 	return output, "", 0
+	// }
 }
 
-func (s *DevopsServer) socketHandler(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
-	var upgrader = websocket.Upgrader{}
-	if websocket.IsWebSocketUpgrade(req) {
-		conn, err := upgrader.Upgrade(w, req, nil)
-		if err != nil {
-			log.Errorf(log.Fields{}, "error during connection upgrade: %v", err)
-			return nil, err.Error(), -1
-		}
-		defer conn.Close()
+// var upgrader = websocket.Upgrader{}
+// func (s *DevopsServer) socketHandler(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+// 	if websocket.IsWebSocketUpgrade(req) {
+// 		conn, err := upgrader.Upgrade(w, req, nil)
+// 		if err != nil {
+// 			log.Errorf(log.Fields{}, "error during connection upgrade: %v", err)
+// 			return nil, err.Error(), -1
+// 		}
+// 		defer conn.Close()
+// 		go func() {
+// 			for {
+// 				nowTime := time.Now().Unix()
+// 				results, err := gateway.GetDevicesMetricsDiffByTime([]string{"miner_block_produced"}, nowTime-60*int64(time.Second), nowTime)
+// 				if err != nil {
+// 					log.Errorf(log.Fields{}, "error during get block info from prometheus: %v", err)
+// 				}
+// 				answers := []gateway.DeviceMetricByTime{}
+// 				for _, result := range results[0].Results {
+// 					answer := gateway.DeviceMetricByTime{}
+// 					if result.Diff <= 0 {
+// 						continue
+// 					}
+// 					answer.Diff = result.Diff
+// 					answer.Instance = result.Instance
+// 					answers = append(answers, answer)
+// 				}
+// 				if len(answers) == 0 {
+// 					continue
+// 				}
+// 				byteAnswer, err := json.Marshal(answers)
+// 				if err != nil {
+// 					log.Errorf(log.Fields{}, "fail to marshal answers: %v", err)
+// 				}
+// 				err = conn.WriteMessage(websocket.TextMessage, byteAnswer)
+// 				if err != nil {
+// 					log.Errorf(log.Fields{}, "Error during message writing: %v", err)
+// 				}
+// 				time.Sleep(time.Minute)
+// 			}
+// 		}()
+// 	} else {
+// 		return nil, "", 0
+// 	}
+// 	return nil, "", -2
+// }
 
-		go func() {
-			for {
-				nowTime := time.Now().Unix()
-				results, err := gateway.GetDevicesMetricsDiffByTime([]string{"miner_block_produced"}, nowTime-60*int64(time.Second), nowTime)
-				if err != nil {
-					log.Errorf(log.Fields{}, "error during get block info from prometheus: %v", err)
-				}
-
-				answers := []gateway.DeviceMetricByTime{}
-
-				for _, result := range results[0].Results {
-					answer := gateway.DeviceMetricByTime{}
-					if result.Diff <= 0 {
-						continue
-					}
-					answer.Diff = result.Diff
-					answer.Instance = result.Instance
-					answers = append(answers, answer)
-				}
-
-				byteAnswer, err := json.Marshal(answers)
-				if err != nil {
-					log.Errorf(log.Fields{}, "fail to marshal answers: %v", err)
-				}
-
-				err = conn.WriteMessage(websocket.TextMessage, byteAnswer)
-				if err != nil {
-					log.Errorf(log.Fields{}, "Error during message writing: %v", err)
-				}
-			}
-		}()
-	} else {
-		return nil, "", 0
+func (s *DevopsServer) GetDeviceBlockInfosRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
 	}
-	return nil, "", -2
+
+	input := types.GetDeviceBlockInfosInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	user, err := authapi.UserInfo(authtypes.UserInfoInput{
+		AuthCode: input.AuthCode,
+	})
+
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	devices, msg, code := s.myDevicesByUserInfo(user)
+	if code != 0 {
+		return nil, msg, code
+	}
+
+	addresses := []string{}
+	for _, device := range devices.(types.MyDevicesOutput).Devices {
+		if device.Role == types.MinerNode || device.Role == types.FullMinerNode {
+			addresses = append(addresses, device.LocalAddr)
+		}
+	}
+
+	output := types.GetDeviceBlockInfosOutput{}
+
+	blockMetrics := []string{"miner_block_produced", "miner_block_failed", "miner_block_in_past", "miner_fork_blocks"}
+	for _, address := range addresses {
+		blockInfo := types.BlockInfo{}
+		metricDeltas, _ := prometheus.GetMetricsValueDeltaByAddress(blockMetrics, address, "", input.TimeRange)
+		blockInfo.LocalAddr = address
+		for _, metricDelta := range metricDeltas {
+			switch metricDelta.MetricName {
+			case "miner_block_produced":
+				blockInfo.BlockProduced = uint64(metricDelta.Delta)
+			case "miner_block_failed":
+				blockInfo.BlockFailed = uint64(metricDelta.Delta)
+			case "miner_block_in_past":
+				blockInfo.BlockTimeout = uint64(metricDelta.Delta)
+			case "miner_fork_blocks":
+				blockInfo.BlockForked = uint64(metricDelta.Delta)
+			}
+		}
+		output.BlockInfos = append(output.BlockInfos, blockInfo)
+	}
+
+	return output, "", 0
+
 }
