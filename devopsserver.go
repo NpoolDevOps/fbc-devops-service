@@ -195,6 +195,14 @@ func (s *DevopsServer) Run() error {
 		},
 	})
 
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.GetDeviceMetricsValuesSumAPI,
+		Method:   "POST",
+		Handler: func(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+			return s.GetDeviceMetricsValuesSumRequest(w, req)
+		},
+	})
+
 	log.Infof(log.Fields{}, "start http daemon at %v", s.config.Port)
 	httpdaemon.Run(s.config.Port)
 	return nil
@@ -868,4 +876,44 @@ func (s *DevopsServer) GetDeviceBlockInfosRequest(w http.ResponseWriter, req *ht
 
 	return output, "", 0
 
+}
+
+func (s *DevopsServer) GetDeviceMetricsValuesSumRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.GetDeviceMetricsValuesSumInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	_, err = authapi.UserInfo(authtypes.UserInfoInput{
+		AuthCode: input.AuthCode,
+	})
+
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	output := []types.MetricSum{}
+	for _, metric := range input.Metrics {
+		metricSum := types.MetricSum{}
+		sum, err := prometheus.GetMetricValuesSum(metric, "")
+		if err != nil {
+			log.Errorf(log.Fields{}, "get %v sum error %v", metric, err)
+		}
+		metricSum.Metric = metric
+		metricSum.Sum = sum
+		output = append(output, metricSum)
+	}
+	return types.GetDeviceMetricsValuesSumOutput{
+		MetricsSum: output,
+	}, "", 0
 }

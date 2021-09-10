@@ -214,3 +214,17 @@ type BlockInfo struct {
 type GetDeviceBlockInfosOutput struct {
 	BlockInfos []BlockInfo `json:"block_infos"`
 }
+
+type GetDeviceMetricsValuesSumInput struct {
+	AuthCode string   `json:"auth_code"`
+	Metrics  []string `json:"metrics"`
+}
+
+type MetricSum struct {
+	Metric string  `json:"metric"`
+	Sum    float64 `json:"sum"`
+}
+
+type GetDeviceMetricsValuesSumOutput struct {
+	MetricsSum []MetricSum `json:"metrics_sum"`
+}

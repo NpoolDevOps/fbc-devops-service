@@ -17,6 +17,7 @@ const (
 	DeviceMetricValueDiffByTimeAPI = "/api/v0/device/metric/value/diff/by/time"
 	GetAllDevicesNumAPI            = "/api/v0/get/devices/num"
 	GetDeviceBlockInfosAPI         = "/api/v0/get/device/block/infos"
+	GetDeviceMetricsValuesSumAPI   = "/api/v0/get/device/metric/values/sum"
 )
 
 const (
