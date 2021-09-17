@@ -55,7 +55,14 @@ func getQueryResponse(query string) (Response, error) {
 
 func queryByUser(customerName string) string {
 	if customerName != "" {
-		return fmt.Sprintf("user=\"%v\"", customerName)
+		return fmt.Sprintf("user=\"%v\",", customerName)
+	}
+	return ""
+}
+
+func queryByNetworkType(networkType string) string {
+	if networkType != "" {
+		return fmt.Sprintf("networktype=\"%v\",", networkType)
 	}
 	return ""
 }
@@ -66,12 +73,12 @@ type UpNum struct {
 	DownDevice uint64 `json:"down_device"`
 }
 
-func GetDeviceUpNumByJob(customerName string) ([]UpNum, error) {
+func GetDeviceUpNumByJob(customerName, networkType string) ([]UpNum, error) {
 	jobs := []string{types.FullNode, types.MinerNode, types.FullMinerNode, types.WorkerNode, types.StorageNode}
 
 	var output []UpNum
 	for _, job := range jobs {
-		query := fmt.Sprintf("count_values(\"count\",up{instance=~\".*:52379\",job=\"%v\",%v})", job, queryByUser(customerName))
+		query := fmt.Sprintf("count_values(\"count\",up{instance=~\".*:52379\",job=\"%v\",%v%v})", job, queryByUser(customerName), queryByNetworkType(networkType))
 
 		response, err := getQueryResponse(query)
 		upNum := UpNum{}
@@ -96,8 +103,8 @@ func GetDeviceUpNumByJob(customerName string) ([]UpNum, error) {
 	return output, nil
 }
 
-func GetDeviceUpTotalNum(customerName string) (uint64, error) {
-	query := fmt.Sprintf("count(up{instance=~\".*:52379\",%v})", queryByUser(customerName))
+func GetDeviceUpTotalNum(customerName, networkType string) (uint64, error) {
+	query := fmt.Sprintf("count(up{instance=~\".*:52379\",%v%v})", queryByUser(customerName), queryByNetworkType(networkType))
 
 	response, err := getQueryResponse(query)
 	if err != nil {
@@ -108,8 +115,8 @@ func GetDeviceUpTotalNum(customerName string) (uint64, error) {
 	return num, nil
 }
 
-func GetMetricValuesSum(metricName, customerName string) (float64, error) {
-	query := fmt.Sprintf("sum(%v{%v})", metricName, queryByUser(customerName))
+func GetMetricValuesSum(metricName, customerName, networkType string) (float64, error) {
+	query := fmt.Sprintf("sum(%v{%v%v})", metricName, queryByUser(customerName), queryByNetworkType(networkType))
 
 	response, err := getQueryResponse(query)
 	if err != nil {
@@ -120,8 +127,8 @@ func GetMetricValuesSum(metricName, customerName string) (float64, error) {
 
 }
 
-func GetMetricsValueDelta(metricName, customerName, timeRange string) (float64, error) {
-	query := fmt.Sprintf("sum(delta(%v{%v}[%v]))", metricName, queryByUser(customerName), timeRange)
+func GetMetricsValueDelta(metricName, customerName, timeRange, networkType string) (float64, error) {
+	query := fmt.Sprintf("sum(delta(%v{%v%v}[%v]))", metricName, queryByUser(customerName), queryByNetworkType(networkType), timeRange)
 
 	response, err := getQueryResponse(query)
 	if err != nil {
@@ -201,11 +208,11 @@ type MetricValueDelta struct {
 	Delta      float64
 }
 
-func GetMetricsValueDeltaByAddress(metrics []string, localAddr, customerName, timeRange string) ([]MetricValueDelta, error) {
+func GetMetricsValueDeltaByAddress(metrics []string, localAddr, customerName, timeRange, networkType string) ([]MetricValueDelta, error) {
 	output := []MetricValueDelta{}
 	for _, metric := range metrics {
 		var metricValueDelta MetricValueDelta
-		query := fmt.Sprintf("delta(%v{instance=\"%v:52379\",%v}[%v])", metric, localAddr, queryByUser(customerName), timeRange)
+		query := fmt.Sprintf("delta(%v{instance=\"%v:52379\",%v%v}[%v])", metric, localAddr, queryByUser(customerName), queryByNetworkType(networkType), timeRange)
 		response, err := getQueryResponse(query)
 		metricValueDelta.MetricName = metric
 		if err != nil {

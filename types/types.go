@@ -75,6 +75,7 @@ type DeviceAttribute struct {
 	RuntimeHddCount    int      `json:"runtime_hdd_count"`
 	ParentSpec         []string `json:"parent_spec"`
 	Maintaining        bool     `json:"maintaining"`
+	NetworkType        string   `json:"network_type"`
 	Offline            bool     `json:"offline"`
 }
 
@@ -168,10 +169,14 @@ type DeviceMetricValueDiffByTimeInput struct {
 type GetAllDevicesNumInput struct {
 }
 
-type GetAllDevicesNumOutput struct {
+type DeviceNums struct {
 	All  uint64        `json:"all"`
 	Down DownDeviceNum `json:"down"`
 	Up   UpDeviceNum   `json:"up"`
+}
+
+type GetAllDevicesNumOutput struct {
+	Numbers map[string]DeviceNums `json:"numbers"`
 }
 
 // type AllDeviceNum struct {
@@ -212,7 +217,7 @@ type BlockInfo struct {
 }
 
 type GetDeviceBlockInfosOutput struct {
-	BlockInfos []BlockInfo `json:"block_infos"`
+	BlockInfos map[string][]BlockInfo `json:"block_infos"`
 }
 
 type GetDeviceMetricsValuesSumInput struct {
@@ -226,5 +231,5 @@ type MetricSum struct {
 }
 
 type GetDeviceMetricsValuesSumOutput struct {
-	MetricsSum []MetricSum `json:"metrics_sum"`
+	MetricsSum map[string][]MetricSum `json:"metrics_sum"`
 }

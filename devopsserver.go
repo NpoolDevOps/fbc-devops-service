@@ -28,10 +28,12 @@ type DevopsConfig struct {
 }
 
 type DevopsServer struct {
-	config      DevopsConfig
-	authText    string
-	redisClient *devopsredis.RedisCli
-	mysqlClient *devopsmysql.MysqlCli
+	BlockInfo        map[string]string
+	NetworktypeGroup []string
+	config           DevopsConfig
+	authText         string
+	redisClient      *devopsredis.RedisCli
+	mysqlClient      *devopsmysql.MysqlCli
 }
 
 func NewDevopsServer(configFile string) *DevopsServer {
@@ -470,6 +472,15 @@ func (s *DevopsServer) myDevicesByUserInfo(user *authtypes.UserInfoOutput) (inte
 			oInfo.LocalAddr = device.LocalAddr
 			oInfo.PublicAddr = device.PublicAddr
 		}
+
+		clientInfo, err := licapi.ClientInfoBySpec(lictypes.ClientInfoBySpecInput{
+			Spec: oInfo.Spec,
+		})
+		if err != nil {
+			return nil, err.Error(), -8
+		}
+		oInfo.NetworkType = clientInfo.NetworkType
+
 		for index, myDevice := range output.Devices {
 			if myDevice.LocalAddr == device.LocalAddr {
 				output.Devices = append(output.Devices[:index], output.Devices[index+1:]...)
@@ -655,12 +666,21 @@ func (s *DevopsServer) DeviceMetricValueDiffByTimeRequest(w http.ResponseWriter,
 		return nil, err.Error(), -4
 	}
 
-	resp, err := prometheus.GetMetricsValueDelta(input.Metric, "", input.TimeRange)
-	if err != nil {
-		return nil, err.Error(), -5
+	output := make(map[string]float64)
+	for _, networkType := range types.NetworktypeGroup {
+		resp, err := prometheus.GetMetricsValueDelta(input.Metric, "", input.TimeRange, networkType)
+		if err != nil {
+			return nil, err.Error(), -5
+		}
+		output[networkType] = resp
 	}
 
-	return resp, "", 0
+	// resp, err := prometheus.GetMetricsValueDelta(input.Metric, "", input.TimeRange)
+	// if err != nil {
+	// 	return nil, err.Error(), -5
+	// }
+
+	return output, "", 0
 }
 
 func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
@@ -686,40 +706,40 @@ func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.
 		return nil, err.Error(), -4
 	}
 
-	var output types.GetAllDevicesNumOutput
+	output := types.GetAllDevicesNumOutput{}
 
-	var resp []prometheus.UpNum
-	var allNum uint64
+	for _, networkType := range types.NetworktypeGroup {
+		var out types.DeviceNums
+		resp, err := prometheus.GetDeviceUpNumByJob("", networkType)
+		allNum, err := prometheus.GetDeviceUpTotalNum("", networkType)
 
-	resp, err = prometheus.GetDeviceUpNumByJob("")
-	allNum, err = prometheus.GetDeviceUpTotalNum("")
-
-	if err != nil {
-		return nil, err.Error(), -5
-	}
-
-	for _, upNum := range resp {
-		switch upNum.Job {
-		case types.MinerNode:
-			output.Down.MinerDownNumber = upNum.DownDevice
-			output.Up.MinerUpNumber = upNum.UpDevice
-		case types.FullMinerNode:
-			output.Down.FullminerDownNumber = upNum.DownDevice
-			output.Up.FullminerUpNumber = upNum.UpDevice
-		case types.FullNode:
-			output.Down.FullnodeDownNumber = upNum.DownDevice
-			output.Up.FullnodeUpNumber = upNum.UpDevice
-		case types.WorkerNode:
-			output.Down.WorkerDownNumber = upNum.DownDevice
-			output.Up.WorkerUpNumber = upNum.UpDevice
-		case types.StorageNode:
-			output.Down.StorageDownNumber = upNum.DownDevice
-			output.Up.StorageUpNumber = upNum.UpDevice
-
+		if err != nil {
+			return nil, err.Error(), -5
 		}
+		out.All = allNum
+
+		for _, upNum := range resp {
+			switch upNum.Job {
+			case types.MinerNode:
+				out.Down.MinerDownNumber = upNum.DownDevice
+				out.Up.MinerUpNumber = upNum.UpDevice
+			case types.FullMinerNode:
+				out.Down.FullminerDownNumber = upNum.DownDevice
+				out.Up.FullminerUpNumber = upNum.UpDevice
+			case types.FullNode:
+				out.Down.FullnodeDownNumber = upNum.DownDevice
+				out.Up.FullnodeUpNumber = upNum.UpDevice
+			case types.WorkerNode:
+				out.Down.WorkerDownNumber = upNum.DownDevice
+				out.Up.WorkerUpNumber = upNum.UpDevice
+			case types.StorageNode:
+				out.Down.StorageDownNumber = upNum.DownDevice
+				out.Up.StorageUpNumber = upNum.UpDevice
+			}
+		}
+		output.Numbers[networkType] = out
 	}
 
-	output.All = allNum
 	return output, "", 0
 
 	// resp, _, code := s.myDevicesByUserInfo(user)
@@ -855,23 +875,48 @@ func (s *DevopsServer) GetDeviceBlockInfosRequest(w http.ResponseWriter, req *ht
 	output := types.GetDeviceBlockInfosOutput{}
 
 	blockMetrics := []string{"miner_block_produced", "miner_block_failed", "miner_block_in_past", "miner_fork_blocks"}
-	for _, address := range addresses {
-		blockInfo := types.BlockInfo{}
-		metricDeltas, _ := prometheus.GetMetricsValueDeltaByAddress(blockMetrics, address, "", input.TimeRange)
-		blockInfo.LocalAddr = address
-		for _, metricDelta := range metricDeltas {
-			switch metricDelta.MetricName {
-			case "miner_block_produced":
-				blockInfo.BlockProduced = uint64(metricDelta.Delta)
-			case "miner_block_failed":
-				blockInfo.BlockFailed = uint64(metricDelta.Delta)
-			case "miner_block_in_past":
-				blockInfo.BlockTimeout = uint64(metricDelta.Delta)
-			case "miner_fork_blocks":
-				blockInfo.BlockForked = uint64(metricDelta.Delta)
+	for _, networkType := range types.NetworktypeGroup {
+		out := []types.BlockInfo{}
+		for _, address := range addresses {
+			blockInfo := types.BlockInfo{}
+			metricDeltas, _ := prometheus.GetMetricsValueDeltaByAddress(blockMetrics, address, "", input.TimeRange, networkType)
+			blockInfo.LocalAddr = address
+			for _, metricDelta := range metricDeltas {
+				val, _ := gateway.GetMetricValueByAddress(address, metricDelta.MetricName)
+				switch metricDelta.MetricName {
+				case "miner_block_produced":
+					if s.BlockInfo[address+metricDelta.MetricName] == val {
+						blockInfo.BlockProduced = 0
+					} else {
+						blockInfo.BlockProduced = uint64(metricDelta.Delta)
+					}
+					s.BlockInfo[address+metricDelta.MetricName] = val
+				case "miner_block_failed":
+					if s.BlockInfo[address+metricDelta.MetricName] == val {
+						blockInfo.BlockFailed = 0
+					} else {
+						blockInfo.BlockFailed = uint64(metricDelta.Delta)
+					}
+					s.BlockInfo[address+metricDelta.MetricName] = val
+				case "miner_block_in_past":
+					if s.BlockInfo[address+metricDelta.MetricName] == val {
+						blockInfo.BlockTimeout = 0
+					} else {
+						blockInfo.BlockTimeout = uint64(metricDelta.Delta)
+					}
+					s.BlockInfo[address+metricDelta.MetricName] = val
+				case "miner_fork_blocks":
+					if s.BlockInfo[address+metricDelta.MetricName] == val {
+						blockInfo.BlockForked = 0
+					} else {
+						blockInfo.BlockForked = uint64(metricDelta.Delta)
+					}
+					s.BlockInfo[address+metricDelta.MetricName] = val
+				}
 			}
+			out = append(out, blockInfo)
 		}
-		output.BlockInfos = append(output.BlockInfos, blockInfo)
+		output.BlockInfos[networkType] = out
 	}
 
 	return output, "", 0
@@ -902,18 +947,21 @@ func (s *DevopsServer) GetDeviceMetricsValuesSumRequest(w http.ResponseWriter, r
 		return nil, err.Error(), -4
 	}
 
-	output := []types.MetricSum{}
-	for _, metric := range input.Metrics {
-		metricSum := types.MetricSum{}
-		sum, err := prometheus.GetMetricValuesSum(metric, "")
-		if err != nil {
-			log.Errorf(log.Fields{}, "get %v sum error %v", metric, err)
+	output := types.GetDeviceMetricsValuesSumOutput{}
+	for _, networkType := range types.NetworktypeGroup {
+		out := []types.MetricSum{}
+		for _, metric := range input.Metrics {
+			metricSum := types.MetricSum{}
+			sum, err := prometheus.GetMetricValuesSum(metric, "", networkType)
+			if err != nil {
+				log.Errorf(log.Fields{}, "get %v sum error %v", metric, err)
+			}
+			metricSum.Metric = metric
+			metricSum.Sum = sum
+			out = append(out, metricSum)
 		}
-		metricSum.Metric = metric
-		metricSum.Sum = sum
-		output = append(output, metricSum)
+		output.MetricsSum[networkType] = out
 	}
-	return types.GetDeviceMetricsValuesSumOutput{
-		MetricsSum: output,
-	}, "", 0
+
+	return output, "", 0
 }

@@ -139,21 +139,19 @@ func GetMetricsByTime(queryTime, address, metric string) (float64, error) {
 
 }
 
-func GetMetricValueByAddress(address, metric string) (float64, error) {
+func GetMetricValueByAddress(address, metric string) (string, error) {
 	query := "{instance=\"" + address + ":52379\"}"
 	query = metric + strings.Replace(url.QueryEscape(query), "+", "%20", -1)
 
 	response, err := getQueryResponse(query, false)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	if len(response.(MetricResponse).Data.Result) == 0 {
-		return 0, nil
+		return "", nil
 	}
-	result, _ := strconv.ParseFloat(response.(MetricResponse).Data.Result[0].Value[1].(string), 64)
-
-	return result, nil
+	return response.(MetricResponse).Data.Result[0].Value[1].(string), nil
 
 }
 

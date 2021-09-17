@@ -27,3 +27,5 @@ const (
 	WorkerNode    = "worker"
 	StorageNode   = "storage"
 )
+
+var NetworktypeGroup = []string{"filecash", "filecoin"}
