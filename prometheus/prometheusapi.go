@@ -208,11 +208,11 @@ type MetricValueDelta struct {
 	Delta      float64
 }
 
-func GetMetricsValueDeltaByAddress(metrics []string, localAddr, customerName, timeRange, networkType string) ([]MetricValueDelta, error) {
+func GetMetricsValueDeltaByAddress(metrics []string, localAddr, customerName, timeRange string) ([]MetricValueDelta, error) {
 	output := []MetricValueDelta{}
 	for _, metric := range metrics {
 		var metricValueDelta MetricValueDelta
-		query := fmt.Sprintf("delta(%v{instance=\"%v:52379\",%v%v}[%v])", metric, localAddr, queryByUser(customerName), queryByNetworkType(networkType), timeRange)
+		query := fmt.Sprintf("delta(%v{instance=\"%v:52379\",%v}[%v])", metric, localAddr, queryByUser(customerName), timeRange)
 		response, err := getQueryResponse(query)
 		metricValueDelta.MetricName = metric
 		if err != nil {

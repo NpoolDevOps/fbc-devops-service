@@ -875,48 +875,45 @@ func (s *DevopsServer) GetDeviceBlockInfosRequest(w http.ResponseWriter, req *ht
 	output := types.GetDeviceBlockInfosOutput{}
 
 	blockMetrics := []string{"miner_block_produced", "miner_block_failed", "miner_block_in_past", "miner_fork_blocks"}
-	for _, networkType := range types.NetworktypeGroup {
-		out := []types.BlockInfo{}
-		for _, address := range addresses {
-			blockInfo := types.BlockInfo{}
-			metricDeltas, _ := prometheus.GetMetricsValueDeltaByAddress(blockMetrics, address, "", input.TimeRange, networkType)
-			blockInfo.LocalAddr = address
-			for _, metricDelta := range metricDeltas {
-				val, _ := gateway.GetMetricValueByAddress(address, metricDelta.MetricName)
-				switch metricDelta.MetricName {
-				case "miner_block_produced":
-					if s.BlockInfo[address+metricDelta.MetricName] == val {
-						blockInfo.BlockProduced = 0
-					} else {
-						blockInfo.BlockProduced = uint64(metricDelta.Delta)
-					}
-					s.BlockInfo[address+metricDelta.MetricName] = val
-				case "miner_block_failed":
-					if s.BlockInfo[address+metricDelta.MetricName] == val {
-						blockInfo.BlockFailed = 0
-					} else {
-						blockInfo.BlockFailed = uint64(metricDelta.Delta)
-					}
-					s.BlockInfo[address+metricDelta.MetricName] = val
-				case "miner_block_in_past":
-					if s.BlockInfo[address+metricDelta.MetricName] == val {
-						blockInfo.BlockTimeout = 0
-					} else {
-						blockInfo.BlockTimeout = uint64(metricDelta.Delta)
-					}
-					s.BlockInfo[address+metricDelta.MetricName] = val
-				case "miner_fork_blocks":
-					if s.BlockInfo[address+metricDelta.MetricName] == val {
-						blockInfo.BlockForked = 0
-					} else {
-						blockInfo.BlockForked = uint64(metricDelta.Delta)
-					}
-					s.BlockInfo[address+metricDelta.MetricName] = val
+	out := []types.BlockInfo{}
+	for _, address := range addresses {
+		blockInfo := types.BlockInfo{}
+		metricDeltas, _ := prometheus.GetMetricsValueDeltaByAddress(blockMetrics, address, "", input.TimeRange)
+		blockInfo.LocalAddr = address
+		for _, metricDelta := range metricDeltas {
+			val, _ := gateway.GetMetricValueByAddress(address, metricDelta.MetricName)
+			switch metricDelta.MetricName {
+			case "miner_block_produced":
+				if s.BlockInfo[address+metricDelta.MetricName] == val {
+					blockInfo.BlockProduced = 0
+				} else {
+					blockInfo.BlockProduced = uint64(metricDelta.Delta)
 				}
+				s.BlockInfo[address+metricDelta.MetricName] = val
+			case "miner_block_failed":
+				if s.BlockInfo[address+metricDelta.MetricName] == val {
+					blockInfo.BlockFailed = 0
+				} else {
+					blockInfo.BlockFailed = uint64(metricDelta.Delta)
+				}
+				s.BlockInfo[address+metricDelta.MetricName] = val
+			case "miner_block_in_past":
+				if s.BlockInfo[address+metricDelta.MetricName] == val {
+					blockInfo.BlockTimeout = 0
+				} else {
+					blockInfo.BlockTimeout = uint64(metricDelta.Delta)
+				}
+				s.BlockInfo[address+metricDelta.MetricName] = val
+			case "miner_fork_blocks":
+				if s.BlockInfo[address+metricDelta.MetricName] == val {
+					blockInfo.BlockForked = 0
+				} else {
+					blockInfo.BlockForked = uint64(metricDelta.Delta)
+				}
+				s.BlockInfo[address+metricDelta.MetricName] = val
 			}
-			out = append(out, blockInfo)
 		}
-		output.BlockInfos[networkType] = out
+		out = append(out, blockInfo)
 	}
 
 	return output, "", 0
