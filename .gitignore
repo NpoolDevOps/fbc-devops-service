@@ -1,3 +1,4 @@
 fbc-devops-service
 /main
 /gateway/gateway_test.go
+/prometheus/prometheusapi_test.go

@@ -207,7 +207,6 @@ func getQueryResponse(query string, doRange bool) (interface{}, error) {
 	} else {
 		url = fmt.Sprintf("http://%v/api/v1/query?query=%v", PrometheusSite, query)
 	}
-	fmt.Println("url is", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Errorf(log.Fields{}, "get info from prometheus host %v error: %v", PrometheusSite, err)

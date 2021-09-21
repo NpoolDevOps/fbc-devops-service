@@ -78,7 +78,7 @@ func GetDeviceUpNumByJob(customerName, networkType string) ([]UpNum, error) {
 
 	var output []UpNum
 	for _, job := range jobs {
-		query := fmt.Sprintf("count_values(\"count\",up{instance=~\".*:52379\",job=\"%v\",%v%v})", job, queryByUser(customerName), queryByNetworkType(networkType))
+		query := fmt.Sprintf("count_values(\"count\",base_ping_gateway_lost{instance=~\".*:52379\",job=\"%v\",%v%v})", job, queryByUser(customerName), queryByNetworkType(networkType))
 
 		response, err := getQueryResponse(query)
 		upNum := UpNum{}
@@ -104,7 +104,7 @@ func GetDeviceUpNumByJob(customerName, networkType string) ([]UpNum, error) {
 }
 
 func GetDeviceUpTotalNum(customerName, networkType string) (uint64, error) {
-	query := fmt.Sprintf("count(up{instance=~\".*:52379\",%v%v})", queryByUser(customerName), queryByNetworkType(networkType))
+	query := fmt.Sprintf("count(base_ping_gateway_lost{instance=~\".*:52379\",%v%v})", queryByUser(customerName), queryByNetworkType(networkType))
 
 	response, err := getQueryResponse(query)
 	if err != nil {
@@ -218,6 +218,7 @@ func GetMetricsValueDeltaByAddress(metrics []string, localAddr, customerName, ti
 		if err != nil {
 			metricValueDelta.Delta = 0
 			log.Errorf(log.Fields{}, "fail to get %v delta, error is %v", metric, err)
+			output = append(output, metricValueDelta)
 			continue
 		}
 		metricValueDelta.Delta, _ = strconv.ParseFloat(response.Data.Result[0].Value[1].(string), 64)
