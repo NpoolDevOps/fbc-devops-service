@@ -177,7 +177,6 @@ func GetDevicesMetricsDiffByTime(metrics []string, startTime, endTime int64) ([]
 			return nil, err
 		}
 
-		fmt.Println("response is", response)
 		metricResult.MetricName = metric
 
 		for _, data := range response.(MetricRangeResponse).Data.Result {
@@ -221,11 +220,9 @@ func getQueryResponse(query string, doRange bool) (interface{}, error) {
 
 	if doRange {
 		err = json.Unmarshal(body, &rangeResponse)
-		fmt.Println("err is", err, "response range is", rangeResponse)
 		return rangeResponse, err
 	} else {
 		err = json.Unmarshal(body, &response)
-		fmt.Println("err is", err, "response range is", response)
 		return response, err
 	}
 }
