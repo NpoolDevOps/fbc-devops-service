@@ -475,13 +475,12 @@ func (s *DevopsServer) myDevicesByUserInfo(user *authtypes.UserInfoOutput) (inte
 			oInfo.PublicAddr = device.PublicAddr
 		}
 
-		//		clientInfo, err := licapi.ClientInfoBySpec(lictypes.ClientInfoBySpecInput{
-		//			Spec: oInfo.Spec,
-		//		})
-		//		if err != nil {
-		//			return nil, err.Error(), -8
-		//		}
-		//		oInfo.NetworkType = clientInfo.NetworkType
+		clientInfo, err := s.redisClient.QueryClient(oInfo.Id.String())
+		if err != nil {
+			log.Errorf(log.Fields{}, "error is %v", err)
+			return nil, err.Error(), -8
+		}
+		oInfo.NetworkType = clientInfo.NetworkType
 
 		for index, myDevice := range output.Devices {
 			if myDevice.LocalAddr == device.LocalAddr {
@@ -709,7 +708,8 @@ func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.
 	}
 
 	devices, _, _ := s.myDevicesByUserInfo(user)
-	numbers, _ := prometheus.GetDeviceUpDownNum(devices.([]types.DeviceAttribute))
+	numbers, _ := prometheus.GetDeviceUpDownNum(devices.(types.MyDevicesOutput).Devices)
+	log.Infof(log.Fields{}, "numbers is %v", numbers)
 
 	output := types.GetAllDevicesNumOutput{}
 	number := make(map[string]types.DeviceNums)
@@ -727,6 +727,7 @@ func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.
 		out.Down.StorageDownNumber = numbers[fmt.Sprintf("%v+%v+down", networkType, types.StorageNode)]
 		out.Up.StorageUpNumber = numbers[fmt.Sprintf("%v+%v+up", networkType, types.StorageNode)]
 		out.All = numbers[fmt.Sprintf("%v+all", networkType)]
+		log.Infof(log.Fields{}, "out is %v", out)
 		number[networkType] = out
 	}
 

@@ -89,3 +89,27 @@ func (cli *RedisCli) QueryDevice(cid uuid.UUID) (*types.DeviceConfig, error) {
 	}
 	return info, nil
 }
+
+type ClientInfo struct {
+	Id          string `json:"id"`
+	ClientUser  string `json:"client_user"`
+	ClientSn    string `json:"client_sn"`
+	Status      string `json:"status"`
+	CreateTime  string `json:"create_time"`
+	ModifyTime  string `json:"modify_time"`
+	NetworkType string `json:"network_type"`
+}
+
+func (cli *RedisCli) QueryClient(id string) (ClientInfo, error) {
+	val, err := cli.client.Get(fmt.Sprintf("fbc:license:server::client:%v", id)).Result()
+	if err != nil {
+		return ClientInfo{}, err
+	}
+
+	clientInfo := ClientInfo{}
+	err = json.Unmarshal([]byte(val), &clientInfo)
+	if err != nil {
+		return ClientInfo{}, err
+	}
+	return clientInfo, nil
+}
