@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -700,45 +701,32 @@ func (s *DevopsServer) GetAllDevicesNumRequest(w http.ResponseWriter, req *http.
 		return nil, "auth code is must", -3
 	}
 
-	_, err = authapi.UserInfo(authtypes.UserInfoInput{
+	user, err := authapi.UserInfo(authtypes.UserInfoInput{
 		AuthCode: input.AuthCode,
 	})
 	if err != nil {
 		return nil, err.Error(), -4
 	}
 
+	devices, _, _ := s.myDevicesByUserInfo(user)
+	numbers, _ := prometheus.GetDeviceUpDownNum(devices.([]types.DeviceAttribute))
+
 	output := types.GetAllDevicesNumOutput{}
 	number := make(map[string]types.DeviceNums)
 
 	for _, networkType := range types.NetworktypeGroup {
 		var out types.DeviceNums
-		resp, err := prometheus.GetDeviceUpNumByJob("", networkType)
-		allNum, err := prometheus.GetDeviceUpTotalNum("", networkType)
-
-		if err != nil {
-			log.Errorf(log.Fields{}, "%v has no result, error is %v", networkType, err)
-		}
-		out.All = allNum
-
-		for _, upNum := range resp {
-			switch upNum.Job {
-			case types.MinerNode:
-				out.Down.MinerDownNumber = upNum.DownDevice
-				out.Up.MinerUpNumber = upNum.UpDevice
-			case types.FullMinerNode:
-				out.Down.FullminerDownNumber = upNum.DownDevice
-				out.Up.FullminerUpNumber = upNum.UpDevice
-			case types.FullNode:
-				out.Down.FullnodeDownNumber = upNum.DownDevice
-				out.Up.FullnodeUpNumber = upNum.UpDevice
-			case types.WorkerNode:
-				out.Down.WorkerDownNumber = upNum.DownDevice
-				out.Up.WorkerUpNumber = upNum.UpDevice
-			case types.StorageNode:
-				out.Down.StorageDownNumber = upNum.DownDevice
-				out.Up.StorageUpNumber = upNum.UpDevice
-			}
-		}
+		out.Down.MinerDownNumber = numbers[fmt.Sprintf("%v+%v+down", networkType, types.MinerNode)]
+		out.Up.MinerUpNumber = numbers[fmt.Sprintf("%v+%v+up", networkType, types.MinerNode)]
+		out.Down.FullminerDownNumber = numbers[fmt.Sprintf("%v+%v+down", networkType, types.FullMinerNode)]
+		out.Up.FullminerUpNumber = numbers[fmt.Sprintf("%v+%v+up", networkType, types.FullMinerNode)]
+		out.Down.FullnodeDownNumber = numbers[fmt.Sprintf("%v+%v+down", networkType, types.FullNode)]
+		out.Up.FullnodeUpNumber = numbers[fmt.Sprintf("%v+%v+up", networkType, types.FullNode)]
+		out.Down.WorkerDownNumber = numbers[fmt.Sprintf("%v+%v+down", networkType, types.WorkerNode)]
+		out.Up.WorkerUpNumber = numbers[fmt.Sprintf("%v+%v+up", networkType, types.WorkerNode)]
+		out.Down.StorageDownNumber = numbers[fmt.Sprintf("%v+%v+down", networkType, types.StorageNode)]
+		out.Up.StorageUpNumber = numbers[fmt.Sprintf("%v+%v+up", networkType, types.StorageNode)]
+		out.All = numbers[fmt.Sprintf("%v+all", networkType)]
 		number[networkType] = out
 	}
 

@@ -73,6 +73,53 @@ type UpNum struct {
 	DownDevice uint64 `json:"down_device"`
 }
 
+func GetDeviceUpDownNum(devices []types.DeviceAttribute) (map[string]uint64, error) {
+	nums := make(map[string]uint64)
+	for _, device := range devices {
+		query := fmt.Sprintf("base_ping_gateway_lost{instance=~\"%v:52379\"}", device.LocalAddr)
+		_, err := getQueryResponse(query)
+
+		switch device.Role {
+		case types.MinerNode:
+			nums[fmt.Sprintf("%v+all", device.NetworkType)] += 1
+			if err != nil {
+				nums[fmt.Sprintf("%v+%v+down", device.NetworkType, device.Role)] += 1
+			} else {
+				nums[fmt.Sprintf("%v+%v+up", device.NetworkType, device.Role)] += 1
+			}
+		case types.FullMinerNode:
+			nums[fmt.Sprintf("%v+all", device.NetworkType)] += 1
+			if err != nil {
+				nums[fmt.Sprintf("%v+%v+down", device.NetworkType, device.Role)] += 1
+			} else {
+				nums[fmt.Sprintf("%v+%v+up", device.NetworkType, device.Role)] += 1
+			}
+		case types.FullNode:
+			nums[fmt.Sprintf("%v+all", device.NetworkType)] += 1
+			if err != nil {
+				nums[fmt.Sprintf("%v+%v+down", device.NetworkType, device.Role)] += 1
+			} else {
+				nums[fmt.Sprintf("%v+%v+up", device.NetworkType, device.Role)] += 1
+			}
+		case types.WorkerNode:
+			nums[fmt.Sprintf("%v+all", device.NetworkType)] += 1
+			if err != nil {
+				nums[fmt.Sprintf("%v+%v+down", device.NetworkType, device.Role)] += 1
+			} else {
+				nums[fmt.Sprintf("%v+%v+up", device.NetworkType, device.Role)] += 1
+			}
+		case types.StorageNode:
+			nums[fmt.Sprintf("%v+all", device.NetworkType)] += 1
+			if err != nil {
+				nums[fmt.Sprintf("%v+%v+down", device.NetworkType, device.Role)] += 1
+			} else {
+				nums[fmt.Sprintf("%v+%v+up", device.NetworkType, device.Role)] += 1
+			}
+		}
+	}
+	return nums, nil
+}
+
 func GetDeviceUpNumByJob(customerName, networkType string) ([]UpNum, error) {
 	jobs := []string{types.FullNode, types.MinerNode, types.FullMinerNode, types.WorkerNode, types.StorageNode}
 
