@@ -400,11 +400,7 @@ func (s *DevopsServer) myDevicesByUserInfo(user *authtypes.UserInfoOutput) (inte
 		oInfo.Offline = info.Offline
 
 		device, err := s.redisClient.QueryDevice(info.Id)
-		if err != nil {
-			if !user.SuperUser {
-				return nil, err.Error(), -7
-			}
-		} else {
+		if err == nil {
 			oInfo.RuntimeNvmeCount = device.NvmeCount
 			oInfo.RuntimeGpuCount = device.GpuCount
 			oInfo.RuntimeMemoryCount = device.MemoryCount
