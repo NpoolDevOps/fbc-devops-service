@@ -3,6 +3,7 @@ package devopsapi
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 	log "github.com/EntropyPool/entropy-logger"
 	types "github.com/NpoolDevOps/fbc-devops-service/types"
 	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
@@ -30,7 +31,7 @@ func MyDevicesByUsername(input types.MyDevicesByUsernameInput, useDomain bool) (
 
 	log.Infof(log.Fields{}, "req to %v://%v%v", scheme, host, types.MyDevicesByUsernameAPI)
 
-	resp, err := httpdaemon.Cli().SetTimeout(120000).R().
+	resp, err := httpdaemon.Cli().SetTimeout(30*time.Minute).R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(input).
 		Post(fmt.Sprintf("%v://%v%v", scheme, host, types.MyDevicesByUsernameAPI))
