@@ -30,7 +30,7 @@ func MyDevicesByUsername(input types.MyDevicesByUsernameInput, useDomain bool) (
 
 	log.Infof(log.Fields{}, "req to %v://%v%v", scheme, host, types.MyDevicesByUsernameAPI)
 
-	resp, err := httpdaemon.R().
+	resp, err := httpdaemon.Cli().SetTimeout(120000).R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(input).
 		Post(fmt.Sprintf("%v://%v%v", scheme, host, types.MyDevicesByUsernameAPI))
